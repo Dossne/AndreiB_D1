@@ -29,6 +29,7 @@ public class SnakeGameController : MonoBehaviour
     };
 
     private readonly List<Vector2Int> snakeSegments = new();
+    private readonly List<Vector2Int> previousSnakeSegments = new();
     private readonly List<Transform> segmentViews = new();
     private readonly Dictionary<Vector2Int, SpriteRenderer> dotViews = new();
     private readonly HashSet<Vector2Int> walls = new();
@@ -55,6 +56,7 @@ public class SnakeGameController : MonoBehaviour
     private Vector2Int playerStart;
     private Vector2Int ghostStart;
     private Vector2Int ghostPosition;
+    private Vector2Int previousGhostPosition;
     private int width;
     private int height;
     private int pendingGrowth;
@@ -70,7 +72,6 @@ public class SnakeGameController : MonoBehaviour
     private const float GhostMoveInterval = 0.3f;
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
-    private const float VisualMoveSpeed = 9f;
 
     private void Start()
     {
@@ -175,10 +176,13 @@ public class SnakeGameController : MonoBehaviour
         queuedDirection = Vector2Int.right;
         ghostDirection = Vector2Int.left;
         ghostPosition = ghostStart;
+        previousGhostPosition = ghostStart;
 
         snakeSegments.Clear();
         snakeSegments.Add(playerStart);
         snakeSegments.Add(playerStart + Vector2Int.left);
+        previousSnakeSegments.Clear();
+        previousSnakeSegments.AddRange(snakeSegments);
 
         foreach (var view in segmentViews)
         {
@@ -213,6 +217,9 @@ public class SnakeGameController : MonoBehaviour
         {
             snakeDirection = queuedDirection;
         }
+
+        previousSnakeSegments.Clear();
+        previousSnakeSegments.AddRange(snakeSegments);
 
         var nextHead = snakeSegments[0] + snakeDirection;
         var tailPosition = snakeSegments[snakeSegments.Count - 1];
@@ -264,6 +271,7 @@ public class SnakeGameController : MonoBehaviour
     private void StepGhost()
     {
         ghostOptions.Clear();
+        previousGhostPosition = ghostPosition;
 
         var directions = new[]
         {
@@ -332,21 +340,26 @@ public class SnakeGameController : MonoBehaviour
 
     private void UpdateVisualMotion()
     {
+        var snakeLerp = Mathf.Clamp01(moveTimer / MoveInterval);
         for (var i = 0; i < snakeSegments.Count && i < segmentViews.Count; i++)
         {
-            var targetPosition = GridToWorld(snakeSegments[i]);
-            segmentViews[i].position = Vector3.MoveTowards(
-                segmentViews[i].position,
-                targetPosition,
-                VisualMoveSpeed * Time.deltaTime);
+            var fromGrid = i < previousSnakeSegments.Count
+                ? previousSnakeSegments[i]
+                : previousSnakeSegments[previousSnakeSegments.Count - 1];
+            var toGrid = snakeSegments[i];
+            segmentViews[i].position = Vector3.Lerp(
+                GridToWorld(fromGrid),
+                GridToWorld(toGrid),
+                snakeLerp);
         }
 
         if (ghostView != null)
         {
-            ghostView.position = Vector3.MoveTowards(
-                ghostView.position,
+            var ghostLerp = Mathf.Clamp01(ghostMoveTimer / GhostMoveInterval);
+            ghostView.position = Vector3.Lerp(
+                GridToWorld(previousGhostPosition),
                 ghostTargetPosition,
-                VisualMoveSpeed * Time.deltaTime);
+                ghostLerp);
         }
     }
 
