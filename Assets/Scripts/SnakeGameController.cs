@@ -29,7 +29,7 @@ public class SnakeGameController : MonoBehaviour
     };
 
     private readonly List<Vector2Int> snakeSegments = new();
-    private readonly Dictionary<int, Transform> segmentViews = new();
+    private readonly List<Transform> segmentViews = new();
     private readonly Dictionary<Vector2Int, SpriteRenderer> dotViews = new();
     private readonly HashSet<Vector2Int> walls = new();
     private readonly List<Vector2Int> ghostOptions = new();
@@ -62,6 +62,7 @@ public class SnakeGameController : MonoBehaviour
     private int dotsSinceLastGrowth;
     private float moveTimer;
     private float ghostMoveTimer;
+    private Vector3 ghostTargetPosition;
     private Vector2 swipeStartPosition;
     private bool isSwipeTracking;
 
@@ -69,6 +70,7 @@ public class SnakeGameController : MonoBehaviour
     private const float GhostMoveInterval = 0.3f;
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
+    private const float VisualMoveSpeed = 9f;
 
     private void Start()
     {
@@ -105,6 +107,8 @@ public class SnakeGameController : MonoBehaviour
             ghostMoveTimer -= GhostMoveInterval;
             StepGhost();
         }
+
+        UpdateVisualMotion();
     }
 
     private void BuildWorld()
@@ -176,7 +180,7 @@ public class SnakeGameController : MonoBehaviour
         snakeSegments.Add(playerStart);
         snakeSegments.Add(playerStart + Vector2Int.left);
 
-        foreach (var view in segmentViews.Values)
+        foreach (var view in segmentViews)
         {
             Destroy(view.gameObject);
         }
@@ -199,6 +203,7 @@ public class SnakeGameController : MonoBehaviour
 
         SyncSnakeVisuals();
         ghostView.position = GridToWorld(ghostPosition);
+        ghostTargetPosition = ghostView.position;
         UpdateUi();
     }
 
@@ -305,7 +310,7 @@ public class SnakeGameController : MonoBehaviour
 
         ghostDirection = bestDirection;
         ghostPosition += ghostDirection;
-        ghostView.position = GridToWorld(ghostPosition);
+        ghostTargetPosition = GridToWorld(ghostPosition);
 
         if (ghostPosition == snakeSegments[0])
         {
@@ -315,24 +320,53 @@ public class SnakeGameController : MonoBehaviour
 
     private void SyncSnakeVisuals()
     {
-        foreach (var view in segmentViews.Values)
-        {
-            Destroy(view.gameObject);
-        }
-
-        segmentViews.Clear();
+        EnsureSnakeVisualCount();
 
         for (var i = 0; i < snakeSegments.Count; i++)
         {
+            var view = segmentViews[i];
+            view.name = $"Segment_{i}";
+            view.GetComponent<SpriteRenderer>().color = i == 0 ? new Color(0.43f, 0.9f, 0.5f) : new Color(0.26f, 0.72f, 0.34f);
+        }
+    }
+
+    private void UpdateVisualMotion()
+    {
+        for (var i = 0; i < snakeSegments.Count && i < segmentViews.Count; i++)
+        {
+            var targetPosition = GridToWorld(snakeSegments[i]);
+            segmentViews[i].position = Vector3.MoveTowards(
+                segmentViews[i].position,
+                targetPosition,
+                VisualMoveSpeed * Time.deltaTime);
+        }
+
+        if (ghostView != null)
+        {
+            ghostView.position = Vector3.MoveTowards(
+                ghostView.position,
+                ghostTargetPosition,
+                VisualMoveSpeed * Time.deltaTime);
+        }
+    }
+
+    private void EnsureSnakeVisualCount()
+    {
+        while (segmentViews.Count < snakeSegments.Count)
+        {
+            var spawnPosition = segmentViews.Count > 0
+                ? segmentViews[segmentViews.Count - 1].position
+                : GridToWorld(snakeSegments[segmentViews.Count]);
+
             var view = CreateCell(
-                snakeSegments[i],
-                i == 0 ? new Color(0.43f, 0.9f, 0.5f) : new Color(0.26f, 0.72f, 0.34f),
-                $"Segment_{i}",
+                snakeSegments[Mathf.Min(segmentViews.Count, snakeSegments.Count - 1)],
+                segmentViews.Count == 0 ? new Color(0.43f, 0.9f, 0.5f) : new Color(0.26f, 0.72f, 0.34f),
+                $"Segment_{segmentViews.Count}",
                 snakeRoot,
                 new Vector3(0.84f, 0.84f, 1f)).transform;
 
-            segmentViews[i] = view;
-            view.position = GridToWorld(snakeSegments[i]);
+            view.position = spawnPosition;
+            segmentViews.Add(view);
         }
     }
 
