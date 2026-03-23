@@ -869,7 +869,7 @@ public class SnakeGameController : MonoBehaviour
         uiCanvas.gameObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         uiCanvas.gameObject.AddComponent<GraphicRaycaster>();
 
-        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        var font = LoadUiFont();
 
         scoreText = CreateText("Score", new Vector2(0.5f, 0.93f), font, 11, TextAnchor.MiddleCenter);
         scoreText.rectTransform.anchoredPosition = new Vector2(0f, 10f);
@@ -1005,5 +1005,27 @@ public class SnakeGameController : MonoBehaviour
         labelText.text = "Start";
 
         return button;
+    }
+
+    private static Font LoadUiFont()
+    {
+        var preferredFonts = new[]
+        {
+            "Segoe UI",
+            "Trebuchet MS",
+            "Calibri",
+            "Arial"
+        };
+
+        foreach (var fontName in preferredFonts)
+        {
+            var font = Font.CreateDynamicFontFromOSFont(fontName, 16);
+            if (font != null)
+            {
+                return font;
+            }
+        }
+
+        return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 }
