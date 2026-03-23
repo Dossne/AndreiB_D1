@@ -298,67 +298,31 @@ public class SnakeGameController : MonoBehaviour
 
     private void StepGhosts()
     {
+        var reservedPositions = new HashSet<Vector2Int>();
+        for (var i = 0; i < ghosts.Count; i++)
+        {
+            reservedPositions.Add(ghosts[i].Position);
+        }
+
         for (var ghostIndex = 0; ghostIndex < ghosts.Count; ghostIndex++)
         {
             var ghost = ghosts[ghostIndex];
+            reservedPositions.Remove(ghost.Position);
+
             if (ghost.StunTimer > 0f)
             {
+                reservedPositions.Add(ghost.Position);
                 continue;
             }
 
-            ghostOptions.Clear();
             ghost.PreviousPosition = ghost.Position;
-
-            var directions = new[]
-            {
-                Vector2Int.up,
-                Vector2Int.down,
-                Vector2Int.left,
-                Vector2Int.right
-            };
-
-            foreach (var direction in directions)
-            {
-                var nextPosition = ghost.Position + direction;
-                if (walls.Contains(nextPosition))
-                {
-                    continue;
-                }
-
-                ghostOptions.Add(direction);
-            }
-
-            if (ghostOptions.Count == 0)
-            {
-                continue;
-            }
-
-            var bestDirection = ghostOptions[0];
-            var bestDistance = int.MaxValue;
-
-            foreach (var option in ghostOptions)
-            {
-                if (ghostOptions.Count > 1 && option == -ghost.Direction)
-                {
-                    continue;
-                }
-
-                var predictedHead = snakeSegments[0] + snakeDirection;
-                var distance = Mathf.Abs((ghost.Position + option).x - predictedHead.x) + Mathf.Abs((ghost.Position + option).y - predictedHead.y);
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    bestDirection = option;
-                }
-            }
-
-            ghost.Direction = bestDirection;
-            var nextGhostPosition = ghost.Position + ghost.Direction;
+            var nextGhostPosition = FindNextGhostPosition(ghost, reservedPositions);
 
             if (nextGhostPosition == snakeSegments[0])
             {
                 ghost.Position = nextGhostPosition;
                 ghost.TargetPosition = GridToWorld(ghost.Position);
+                reservedPositions.Add(ghost.Position);
                 SetGameState(GameState.Lost);
                 return;
             }
@@ -368,13 +332,112 @@ public class SnakeGameController : MonoBehaviour
                 ghost.StunTimer = GhostStunDuration;
                 ghost.TargetPosition = GridToWorld(ghost.Position);
                 UpdateGhostVisual(ghost);
+                reservedPositions.Add(ghost.Position);
                 continue;
             }
 
+            ghost.Direction = nextGhostPosition - ghost.Position;
             ghost.Position = nextGhostPosition;
             ghost.TargetPosition = GridToWorld(ghost.Position);
             UpdateGhostVisual(ghost);
+            reservedPositions.Add(ghost.Position);
         }
+    }
+
+    private Vector2Int FindNextGhostPosition(GhostAgent ghost, HashSet<Vector2Int> reservedPositions)
+    {
+        var target = snakeSegments[0];
+        var queue = new Queue<Vector2Int>();
+        var visited = new HashSet<Vector2Int> { ghost.Position };
+        var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+
+        queue.Enqueue(ghost.Position);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current == target)
+            {
+                break;
+            }
+
+            foreach (var direction in GetCardinalDirections())
+            {
+                var next = current + direction;
+                if (visited.Contains(next) || walls.Contains(next) || reservedPositions.Contains(next))
+                {
+                    continue;
+                }
+
+                if (HitsSnakeBody(next))
+                {
+                    continue;
+                }
+
+                visited.Add(next);
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (!visited.Contains(target))
+        {
+            return FindFallbackGhostPosition(ghost, reservedPositions);
+        }
+
+        var step = target;
+        while (cameFrom.TryGetValue(step, out var previous) && previous != ghost.Position)
+        {
+            step = previous;
+        }
+
+        return step;
+    }
+
+    private Vector2Int FindFallbackGhostPosition(GhostAgent ghost, HashSet<Vector2Int> reservedPositions)
+    {
+        ghostOptions.Clear();
+
+        foreach (var direction in GetCardinalDirections())
+        {
+            var nextPosition = ghost.Position + direction;
+            if (walls.Contains(nextPosition) || reservedPositions.Contains(nextPosition))
+            {
+                continue;
+            }
+
+            ghostOptions.Add(nextPosition);
+        }
+
+        if (ghostOptions.Count == 0)
+        {
+            return ghost.Position;
+        }
+
+        var bestPosition = ghostOptions[0];
+        var bestDistance = int.MaxValue;
+        for (var i = 0; i < ghostOptions.Count; i++)
+        {
+            var distance = Mathf.Abs(ghostOptions[i].x - snakeSegments[0].x) + Mathf.Abs(ghostOptions[i].y - snakeSegments[0].y);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestPosition = ghostOptions[i];
+            }
+        }
+
+        return bestPosition;
+    }
+
+    private static Vector2Int[] GetCardinalDirections()
+    {
+        return new[]
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
     }
 
     private void SyncSnakeVisuals()
