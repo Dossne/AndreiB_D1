@@ -128,11 +128,12 @@ public class MainMenuController : MonoBehaviour
         rectTransform.anchorMin = new Vector2(0.72f, 0.4f);
         rectTransform.anchorMax = new Vector2(0.72f, 0.4f);
         rectTransform.sizeDelta = new Vector2(280f, 220f);
+        rectTransform.anchoredPosition = new Vector2(0f, -20f);
 
         var image = panel.AddComponent<Image>();
         image.color = new Color(0.08f, 0.12f, 0.19f, 0.92f);
-
-        CreateText(panel.transform, "LeaderboardTitle", "Ð›Ð¸Ð´ÐµÑ€Ð±Ð¾Ñ€Ð´", new Vector2(0.5f, 0.85f), font, 24, TextAnchor.MiddleCenter, new Vector2(240f, 40f));
+        var leaderboardTitle = CreateText(panel.transform, "LeaderboardTitle", "Ëèäåðáîðä", new Vector2(0.5f, 0.85f), font, 24, TextAnchor.MiddleCenter, new Vector2(240f, 40f));
+        leaderboardTitle.rectTransform.anchoredPosition = new Vector2(0f, 10f);
 
         var scores = LeaderboardStorage.GetTopScores();
         var lines = new List<string>();
