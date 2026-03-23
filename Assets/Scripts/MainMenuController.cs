@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -132,7 +132,8 @@ public class MainMenuController : MonoBehaviour
 
         var image = panel.AddComponent<Image>();
         image.color = new Color(0.08f, 0.12f, 0.19f, 0.92f);
-        var leaderboardTitle = CreateText(panel.transform, "LeaderboardTitle", "Ëèäåðáîðä", new Vector2(0.5f, 0.85f), font, 24, TextAnchor.MiddleCenter, new Vector2(240f, 40f));
+
+        var leaderboardTitle = CreateText(panel.transform, "LeaderboardTitle", "Ð›Ð¸Ð´ÐµÑ€Ð±Ð¾Ñ€Ð´", new Vector2(0.5f, 0.85f), font, 24, TextAnchor.MiddleCenter, new Vector2(240f, 40f));
         leaderboardTitle.rectTransform.anchoredPosition = new Vector2(0f, 10f);
 
         var scores = LeaderboardStorage.GetTopScores();
