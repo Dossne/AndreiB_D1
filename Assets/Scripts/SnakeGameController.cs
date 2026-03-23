@@ -143,6 +143,7 @@ public class SnakeGameController : MonoBehaviour
     private const int CorridorWidth = 2;
     private const int GhostCount = 3;
     private const int MinGhostSpawnDistance = 10;
+    private const int DotsPerGrowth = 5;
     private static readonly Vector3 SnakeSegmentScale = new(0.94f, 0.94f, 1f);
     private static readonly Vector3 GhostScale = new(0.96f, 0.96f, 1f);
 
@@ -304,7 +305,7 @@ public class SnakeGameController : MonoBehaviour
             dotView.enabled = false;
             score++;
             dotsSinceLastGrowth++;
-            if (dotsSinceLastGrowth >= 3)
+            if (dotsSinceLastGrowth >= DotsPerGrowth)
             {
                 pendingGrowth++;
                 dotsSinceLastGrowth = 0;
