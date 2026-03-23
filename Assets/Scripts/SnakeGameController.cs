@@ -349,9 +349,9 @@ public class SnakeGameController : MonoBehaviour
         var snakeLerp = Mathf.Clamp01(moveTimer / MoveInterval);
         for (var i = 0; i < snakeSegments.Count && i < segmentViews.Count; i++)
         {
-            var fromGrid = i < previousSnakeSegments.Count
-                ? previousSnakeSegments[i]
-                : previousSnakeSegments[previousSnakeSegments.Count - 1];
+            var fromGrid = i == 0
+                ? previousSnakeSegments[0]
+                : previousSnakeSegments[Mathf.Min(i - 1, previousSnakeSegments.Count - 1)];
             var toGrid = snakeSegments[i];
             segmentViews[i].position = Vector3.Lerp(
                 GridToWorld(fromGrid),
