@@ -1011,7 +1011,7 @@ public class SnakeGameController : MonoBehaviour
         rectTransform.anchorMax = new Vector2(0f, 1f);
         rectTransform.pivot = new Vector2(0f, 1f);
         rectTransform.anchoredPosition = new Vector2(18f, -18f);
-        rectTransform.sizeDelta = new Vector2(120f, 42f);
+        rectTransform.sizeDelta = new Vector2(42f, 42f);
 
         var image = buttonObject.AddComponent<Image>();
         image.color = new Color(0.13f, 0.44f, 0.62f, 0.94f);
@@ -1030,10 +1030,10 @@ public class SnakeGameController : MonoBehaviour
 
         var labelText = label.AddComponent<Text>();
         labelText.font = font;
-        labelText.fontSize = 18;
+        labelText.fontSize = 24;
         labelText.alignment = TextAnchor.MiddleCenter;
         labelText.color = Color.white;
-        labelText.text = "Menu";
+        labelText.text = "⚙";
 
         return button;
     }
