@@ -392,6 +392,7 @@ public class SnakeGameController : MonoBehaviour
     private Vector2Int FindNextGhostPosition(GhostAgent ghost, HashSet<Vector2Int> reservedPositions)
     {
         var target = snakeSegments[0];
+        var allowBodyCollision = IsWithinSnakeBodyRadius(ghost.Position, 2);
         var queue = new Queue<Vector2Int>();
         var visited = new HashSet<Vector2Int> { ghost.Position };
         var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
@@ -414,7 +415,7 @@ public class SnakeGameController : MonoBehaviour
                     continue;
                 }
 
-                if (HitsSnakeBody(next))
+                if (!allowBodyCollision && HitsSnakeBody(next))
                 {
                     continue;
                 }
@@ -427,7 +428,7 @@ public class SnakeGameController : MonoBehaviour
 
         if (!visited.Contains(target))
         {
-            return FindFallbackGhostPosition(ghost, reservedPositions);
+            return FindFallbackGhostPosition(ghost, reservedPositions, allowBodyCollision);
         }
 
         var step = target;
@@ -439,7 +440,7 @@ public class SnakeGameController : MonoBehaviour
         return step;
     }
 
-    private Vector2Int FindFallbackGhostPosition(GhostAgent ghost, HashSet<Vector2Int> reservedPositions)
+    private Vector2Int FindFallbackGhostPosition(GhostAgent ghost, HashSet<Vector2Int> reservedPositions, bool allowBodyCollision)
     {
         ghostOptions.Clear();
 
@@ -447,6 +448,11 @@ public class SnakeGameController : MonoBehaviour
         {
             var nextPosition = ghost.Position + direction;
             if (walls.Contains(nextPosition) || reservedPositions.Contains(nextPosition))
+            {
+                continue;
+            }
+
+            if (!allowBodyCollision && HitsSnakeBody(nextPosition))
             {
                 continue;
             }
@@ -472,6 +478,20 @@ public class SnakeGameController : MonoBehaviour
         }
 
         return bestPosition;
+    }
+
+    private bool IsWithinSnakeBodyRadius(Vector2Int position, int radius)
+    {
+        for (var i = 1; i < snakeSegments.Count; i++)
+        {
+            var distance = Mathf.Abs(position.x - snakeSegments[i].x) + Mathf.Abs(position.y - snakeSegments[i].y);
+            if (distance <= radius)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static Vector2Int[] GetCardinalDirections()
