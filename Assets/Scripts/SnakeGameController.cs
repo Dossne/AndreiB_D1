@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SnakeGameController : MonoBehaviour
@@ -56,7 +57,7 @@ public class SnakeGameController : MonoBehaviour
     private Text titleText;
     private Text statusText;
     private Text scoreText;
-    private Button primaryButton;
+    private Button menuButton;
     private EventSystem eventSystem;
 
     private GameState gameState;
@@ -907,8 +908,8 @@ public class SnakeGameController : MonoBehaviour
         scoreText.rectTransform.anchoredPosition = new Vector2(0f, 10f);
         titleText = CreateText("Title", new Vector2(0.5f, 0.79f), font, 34, TextAnchor.MiddleCenter);
         statusText = CreateText("Status", new Vector2(0.5f, 0.69f), font, 20, TextAnchor.MiddleCenter);
-        primaryButton = CreateButton(font);
-        primaryButton.onClick.AddListener(StartRound);
+        menuButton = CreateMenuButton(font);
+        menuButton.onClick.AddListener(OpenMainMenu);
     }
 
     private void UpdateUi()
@@ -927,30 +928,26 @@ public class SnakeGameController : MonoBehaviour
                 statusText.text = "Swipe or use keyboard to turn.\nCollect all dots and avoid the ghost.";
                 titleText.gameObject.SetActive(true);
                 statusText.gameObject.SetActive(true);
-                primaryButton.GetComponentInChildren<Text>().text = "Start";
-                primaryButton.gameObject.SetActive(true);
+                menuButton.gameObject.SetActive(true);
                 break;
             case GameState.Playing:
                 titleText.gameObject.SetActive(false);
                 statusText.gameObject.SetActive(false);
-                primaryButton.GetComponentInChildren<Text>().text = "Restart";
-                primaryButton.gameObject.SetActive(true);
+                menuButton.gameObject.SetActive(true);
                 break;
             case GameState.Won:
                 titleText.text = "You Win";
                 statusText.text = "All dots collected.";
                 titleText.gameObject.SetActive(true);
                 statusText.gameObject.SetActive(true);
-                primaryButton.GetComponentInChildren<Text>().text = "Restart";
-                primaryButton.gameObject.SetActive(true);
+                menuButton.gameObject.SetActive(true);
                 break;
             case GameState.Lost:
                 titleText.text = "Game Over";
                 statusText.text = "A ghost touched the snake head.";
                 titleText.gameObject.SetActive(true);
                 statusText.gameObject.SetActive(true);
-                primaryButton.GetComponentInChildren<Text>().text = "Restart";
-                primaryButton.gameObject.SetActive(true);
+                menuButton.gameObject.SetActive(true);
                 break;
         }
     }
@@ -1004,18 +1001,20 @@ public class SnakeGameController : MonoBehaviour
         return text;
     }
 
-    private Button CreateButton(Font font)
+    private Button CreateMenuButton(Font font)
     {
-        var buttonObject = new GameObject("PrimaryButton");
+        var buttonObject = new GameObject("MenuButton");
         buttonObject.transform.SetParent(uiCanvas.transform, false);
 
         var rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0.5f, 0.12f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.12f);
-        rectTransform.sizeDelta = new Vector2(220f, 54f);
+        rectTransform.anchorMin = new Vector2(0f, 1f);
+        rectTransform.anchorMax = new Vector2(0f, 1f);
+        rectTransform.pivot = new Vector2(0f, 1f);
+        rectTransform.anchoredPosition = new Vector2(18f, -18f);
+        rectTransform.sizeDelta = new Vector2(120f, 42f);
 
         var image = buttonObject.AddComponent<Image>();
-        image.color = new Color(0.13f, 0.58f, 0.31f, 0.92f);
+        image.color = new Color(0.13f, 0.44f, 0.62f, 0.94f);
 
         var button = buttonObject.AddComponent<Button>();
         button.targetGraphic = image;
@@ -1031,12 +1030,17 @@ public class SnakeGameController : MonoBehaviour
 
         var labelText = label.AddComponent<Text>();
         labelText.font = font;
-        labelText.fontSize = 22;
+        labelText.fontSize = 18;
         labelText.alignment = TextAnchor.MiddleCenter;
         labelText.color = Color.white;
-        labelText.text = "Start";
+        labelText.text = "Menu";
 
         return button;
+    }
+
+    private void OpenMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
     }
 
     private static Font LoadUiFont()
