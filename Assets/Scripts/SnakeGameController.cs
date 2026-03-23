@@ -572,6 +572,7 @@ public class SnakeGameController : MonoBehaviour
         if (newState == GameState.Lost)
         {
             lastAttemptScore = score;
+            LeaderboardStorage.RecordScore(lastAttemptScore);
         }
 
         gameState = newState;

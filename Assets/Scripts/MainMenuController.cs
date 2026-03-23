@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -40,11 +41,13 @@ public class MainMenuController : MonoBehaviour
         var font = LoadUiFont();
 
         CreatePanel(canvas.transform);
-        CreateText(canvas.transform, "Title", "Змейка-лабиринт", new Vector2(0.5f, 0.68f), font, 42, TextAnchor.MiddleCenter);
-        CreateText(canvas.transform, "Subtitle", "Собери все точки и выживи в лабиринте с призраком.", new Vector2(0.5f, 0.58f), font, 18, TextAnchor.MiddleCenter);
+        CreateText(canvas.transform, "Title", "Змейка-лабиринт", new Vector2(0.5f, 0.74f), font, 42, TextAnchor.MiddleCenter, new Vector2(760f, 90f));
+        CreateText(canvas.transform, "Subtitle", "Собери все точки и выживи в лабиринте с призраками.", new Vector2(0.5f, 0.64f), font, 18, TextAnchor.MiddleCenter, new Vector2(760f, 70f));
 
-        var startButton = CreateButton(canvas.transform, font, "Старт", new Vector2(0.5f, 0.42f));
+        var startButton = CreateButton(canvas.transform, font, "Старт", new Vector2(0.34f, 0.42f), new Vector2(240f, 62f));
         startButton.onClick.AddListener(() => SceneManager.LoadScene(LevelSceneName));
+
+        BuildLeaderboard(canvas.transform, font);
     }
 
     private static void CreatePanel(Transform parent)
@@ -55,14 +58,14 @@ public class MainMenuController : MonoBehaviour
         var rectTransform = panel.AddComponent<RectTransform>();
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.sizeDelta = new Vector2(620f, 320f);
+        rectTransform.sizeDelta = new Vector2(860f, 360f);
         rectTransform.anchoredPosition = new Vector2(0f, 20f);
 
         var image = panel.AddComponent<Image>();
         image.color = new Color(0.1f, 0.16f, 0.24f, 0.92f);
     }
 
-    private static Text CreateText(Transform parent, string objectName, string value, Vector2 anchor, Font font, int fontSize, TextAnchor alignment)
+    private static Text CreateText(Transform parent, string objectName, string value, Vector2 anchor, Font font, int fontSize, TextAnchor alignment, Vector2 sizeDelta)
     {
         var textObject = new GameObject(objectName);
         textObject.transform.SetParent(parent, false);
@@ -70,7 +73,7 @@ public class MainMenuController : MonoBehaviour
         var rectTransform = textObject.AddComponent<RectTransform>();
         rectTransform.anchorMin = anchor;
         rectTransform.anchorMax = anchor;
-        rectTransform.sizeDelta = new Vector2(700f, 90f);
+        rectTransform.sizeDelta = sizeDelta;
 
         var text = textObject.AddComponent<Text>();
         text.font = font;
@@ -81,7 +84,7 @@ public class MainMenuController : MonoBehaviour
         return text;
     }
 
-    private static Button CreateButton(Transform parent, Font font, string label, Vector2 anchor)
+    private static Button CreateButton(Transform parent, Font font, string label, Vector2 anchor, Vector2 sizeDelta)
     {
         var buttonObject = new GameObject($"{label}Button");
         buttonObject.transform.SetParent(parent, false);
@@ -89,7 +92,7 @@ public class MainMenuController : MonoBehaviour
         var rectTransform = buttonObject.AddComponent<RectTransform>();
         rectTransform.anchorMin = anchor;
         rectTransform.anchorMax = anchor;
-        rectTransform.sizeDelta = new Vector2(240f, 62f);
+        rectTransform.sizeDelta = sizeDelta;
 
         var image = buttonObject.AddComponent<Image>();
         image.color = new Color(0.16f, 0.62f, 0.34f, 1f);
@@ -114,6 +117,31 @@ public class MainMenuController : MonoBehaviour
         labelText.text = label;
 
         return button;
+    }
+
+    private static void BuildLeaderboard(Transform parent, Font font)
+    {
+        var panel = new GameObject("LeaderboardPanel");
+        panel.transform.SetParent(parent, false);
+
+        var rectTransform = panel.AddComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0.72f, 0.4f);
+        rectTransform.anchorMax = new Vector2(0.72f, 0.4f);
+        rectTransform.sizeDelta = new Vector2(280f, 220f);
+
+        var image = panel.AddComponent<Image>();
+        image.color = new Color(0.08f, 0.12f, 0.19f, 0.92f);
+
+        CreateText(panel.transform, "LeaderboardTitle", "Лидерборд", new Vector2(0.5f, 0.85f), font, 24, TextAnchor.MiddleCenter, new Vector2(240f, 40f));
+
+        var scores = LeaderboardStorage.GetTopScores();
+        var lines = new List<string>();
+        for (var i = 0; i < 10; i++)
+        {
+            lines.Add(i < scores.Count ? $"{i + 1}. {scores[i]}" : $"{i + 1}. ---");
+        }
+
+        CreateText(panel.transform, "LeaderboardEntries", string.Join("\n", lines), new Vector2(0.5f, 0.42f), font, 18, TextAnchor.UpperCenter, new Vector2(240f, 180f));
     }
 
     private static Font LoadUiFont()
