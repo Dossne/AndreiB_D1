@@ -154,7 +154,6 @@ public class SnakeGameController : MonoBehaviour
     private void BuildMaze()
     {
         walls.Clear();
-        dotViews.Clear();
 
         for (var row = 0; row < height; row++)
         {
@@ -170,9 +169,6 @@ public class SnakeGameController : MonoBehaviour
                         walls.Add(position);
                         CreateCell(position, new Color(0.23f, 0.52f, 0.8f), "Wall", boardRoot);
                         break;
-                    case '.':
-                        dotViews[position] = CreateCell(position, new Color(0.99f, 0.9f, 0.45f), "Dot", dotsRoot, new Vector3(0.22f, 0.22f, 1f)).GetComponent<SpriteRenderer>();
-                        break;
                     case 'P':
                         playerStart = position;
                         break;
@@ -182,8 +178,6 @@ public class SnakeGameController : MonoBehaviour
                 }
             }
         }
-
-        totalDots = dotViews.Count;
     }
 
     private void StartRound()
@@ -213,10 +207,7 @@ public class SnakeGameController : MonoBehaviour
 
         segmentViews.Clear();
 
-        foreach (var dot in dotViews.Values)
-        {
-            dot.enabled = true;
-        }
+        ResetDots();
 
         if (ghostView == null)
         {
@@ -845,6 +836,38 @@ public class SnakeGameController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void ResetDots()
+    {
+        foreach (Transform child in dotsRoot)
+        {
+            Destroy(child.gameObject);
+        }
+
+        dotViews.Clear();
+
+        for (var row = 0; row < height; row++)
+        {
+            var y = height - 1 - row;
+            for (var x = 0; x < width; x++)
+            {
+                if (mazeRows[row][x] != '.')
+                {
+                    continue;
+                }
+
+                var position = new Vector2Int(x, y);
+                dotViews[position] = CreateCell(
+                    position,
+                    new Color(0.99f, 0.9f, 0.45f),
+                    "Dot",
+                    dotsRoot,
+                    new Vector3(0.22f, 0.22f, 1f)).GetComponent<SpriteRenderer>();
+            }
+        }
+
+        totalDots = dotViews.Count;
     }
 
     private static char GetExpandedCellValue(char sourceCell, int offsetX, int offsetY)
