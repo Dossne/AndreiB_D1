@@ -60,7 +60,7 @@ public class SnakeGameController : MonoBehaviour
     private static Sprite cachedSnakeBodySprite;
     private static Sprite cachedSnakeTailSprite;
     private static Sprite cachedGhostSprite;
-    private static Sprite cachedGearSprite;
+    private static Sprite cachedPauseSprite;
 
     private Transform boardRoot;
     private Transform dotsRoot;
@@ -1175,7 +1175,7 @@ public class SnakeGameController : MonoBehaviour
         labelRect.offsetMax = Vector2.zero;
 
         var labelImage = label.AddComponent<Image>();
-        labelImage.sprite = CreateGearSprite();
+        labelImage.sprite = CreatePauseSprite();
         labelImage.color = Color.white;
         labelImage.preserveAspect = true;
 
@@ -1280,25 +1280,19 @@ public class SnakeGameController : MonoBehaviour
         return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 
-    private static Sprite CreateGearSprite()
+    private static Sprite CreatePauseSprite()
     {
-        if (cachedGearSprite == null)
+        if (cachedPauseSprite == null)
         {
-            cachedGearSprite = CreateSnakeSprite(texture =>
+            cachedPauseSprite = CreateSnakeSprite(texture =>
             {
-                var gearColor = new Color32(245, 248, 252, 255);
-                var clearColor = new Color32(0, 0, 0, 0);
+                var pauseColor = new Color32(245, 248, 252, 255);
 
-                FillRect(texture, 6, 1, 4, 3, gearColor);
-                FillRect(texture, 6, 12, 4, 3, gearColor);
-                FillRect(texture, 1, 6, 3, 4, gearColor);
-                FillRect(texture, 12, 6, 3, 4, gearColor);
-                FillRect(texture, 4, 3, 8, 10, gearColor);
-                FillRect(texture, 3, 4, 10, 8, gearColor);
-                FillRect(texture, 6, 6, 4, 4, clearColor);
+                FillRect(texture, 3, 2, 4, 12, pauseColor);
+                FillRect(texture, 9, 2, 4, 12, pauseColor);
             });
         }
 
-        return cachedGearSprite;
+        return cachedPauseSprite;
     }
 }
