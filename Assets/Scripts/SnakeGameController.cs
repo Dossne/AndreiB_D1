@@ -99,6 +99,7 @@ public class SnakeGameController : MonoBehaviour
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
     private const int GhostCount = 3;
+    private const int MinGhostSpawnDistance = 10;
     private static readonly Vector3 SnakeSegmentScale = new(0.94f, 0.94f, 1f);
     private static readonly Vector3 GhostScale = new(0.96f, 0.96f, 1f);
 
@@ -628,11 +629,31 @@ public class SnakeGameController : MonoBehaviour
         availablePositions.Remove(playerStart);
         availablePositions.Remove(playerStart + Vector2Int.left);
 
-        for (var ghostIndex = 0; ghostIndex < GhostCount && availablePositions.Count > 0; ghostIndex++)
+        var preferredPositions = new List<Vector2Int>();
+        var fallbackPositions = new List<Vector2Int>();
+        for (var i = 0; i < availablePositions.Count; i++)
         {
-            var spawnIndex = Random.Range(0, availablePositions.Count);
-            var spawnPosition = availablePositions[spawnIndex];
-            availablePositions.RemoveAt(spawnIndex);
+            if (ManhattanDistance(availablePositions[i], playerStart) >= MinGhostSpawnDistance)
+            {
+                preferredPositions.Add(availablePositions[i]);
+            }
+            else
+            {
+                fallbackPositions.Add(availablePositions[i]);
+            }
+        }
+
+        for (var ghostIndex = 0; ghostIndex < GhostCount; ghostIndex++)
+        {
+            var sourceList = preferredPositions.Count > 0 ? preferredPositions : fallbackPositions;
+            if (sourceList.Count == 0)
+            {
+                break;
+            }
+
+            var spawnIndex = Random.Range(0, sourceList.Count);
+            var spawnPosition = sourceList[spawnIndex];
+            sourceList.RemoveAt(spawnIndex);
 
             var ghost = new GhostAgent
             {
@@ -650,6 +671,11 @@ public class SnakeGameController : MonoBehaviour
             ghosts.Add(ghost);
             UpdateGhostVisual(ghost);
         }
+    }
+
+    private static int ManhattanDistance(Vector2Int a, Vector2Int b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 
     private void ConfigureCamera()
