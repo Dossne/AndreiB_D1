@@ -1012,7 +1012,7 @@ public class SnakeGameController : MonoBehaviour
         rectTransform.anchorMax = new Vector2(0f, 1f);
         rectTransform.pivot = new Vector2(0f, 1f);
         rectTransform.anchoredPosition = new Vector2(13f, -18f);
-        rectTransform.sizeDelta = new Vector2(42f, 42f);
+        rectTransform.sizeDelta = new Vector2(21f, 21f);
 
         var image = buttonObject.AddComponent<Image>();
         image.color = new Color(0.13f, 0.44f, 0.62f, 0.94f);
@@ -1034,7 +1034,7 @@ public class SnakeGameController : MonoBehaviour
         labelImage.color = Color.white;
         labelImage.preserveAspect = true;
 
-        labelRect.sizeDelta = new Vector2(22f, 22f);
+        labelRect.sizeDelta = new Vector2(11f, 11f);
 
         return button;
     }
