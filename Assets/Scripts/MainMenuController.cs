@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class MainMenuController : MonoBehaviour
 {
     private const string LevelSceneName = "SampleScene";
+    private static readonly Color MenuBackgroundColor = new(0.12f, 0.18f, 0.27f, 1f);
 
     private void Start()
     {
@@ -23,7 +24,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         camera.orthographic = true;
-        camera.backgroundColor = new Color(0.07f, 0.11f, 0.18f);
+        camera.backgroundColor = MenuBackgroundColor;
         camera.transform.position = new Vector3(0f, 0f, -10f);
 
         var eventSystem = Object.FindFirstObjectByType<EventSystem>();
@@ -62,7 +63,7 @@ public class MainMenuController : MonoBehaviour
         rectTransform.anchoredPosition = new Vector2(0f, 20f);
 
         var image = panel.AddComponent<Image>();
-        image.color = new Color(0.1f, 0.16f, 0.24f, 0.92f);
+        image.color = MenuBackgroundColor;
     }
 
     private static Text CreateText(Transform parent, string objectName, string value, Vector2 anchor, Font font, int fontSize, TextAnchor alignment, Vector2 sizeDelta)
