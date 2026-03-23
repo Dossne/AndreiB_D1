@@ -59,6 +59,7 @@ public class SnakeGameController : MonoBehaviour
     private int height;
     private int pendingGrowth;
     private int totalDots;
+    private int dotsSinceLastGrowth;
     private float moveTimer;
     private float ghostMoveTimer;
     private Vector2 swipeStartPosition;
@@ -165,6 +166,7 @@ public class SnakeGameController : MonoBehaviour
         moveTimer = 0f;
         ghostMoveTimer = 0f;
         pendingGrowth = 0;
+        dotsSinceLastGrowth = 0;
         snakeDirection = Vector2Int.right;
         queuedDirection = Vector2Int.right;
         ghostDirection = Vector2Int.left;
@@ -221,7 +223,13 @@ public class SnakeGameController : MonoBehaviour
         if (dotViews.TryGetValue(nextHead, out var dotView) && dotView.enabled)
         {
             dotView.enabled = false;
-            pendingGrowth++;
+            dotsSinceLastGrowth++;
+            if (dotsSinceLastGrowth >= 3)
+            {
+                pendingGrowth++;
+                dotsSinceLastGrowth = 0;
+            }
+
             UpdateUi();
         }
 
