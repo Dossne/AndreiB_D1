@@ -760,31 +760,82 @@ public class SnakeGameController : MonoBehaviour
     {
         mazeRows.Clear();
 
-        foreach (var sourceRow in SourceMazeRows)
+        var rowHeights = new int[SourceMazeRows.Length];
+        for (var rowIndex = 0; rowIndex < SourceMazeRows.Length; rowIndex++)
         {
-            var expandedRows = new char[CorridorWidth][];
-            for (var expandedRowIndex = 0; expandedRowIndex < CorridorWidth; expandedRowIndex++)
+            rowHeights[rowIndex] = IsSolidWallRow(SourceMazeRows[rowIndex]) ? 1 : CorridorWidth;
+        }
+
+        var columnWidths = new int[SourceMazeRows[0].Length];
+        for (var columnIndex = 0; columnIndex < columnWidths.Length; columnIndex++)
+        {
+            columnWidths[columnIndex] = IsSolidWallColumn(columnIndex) ? 1 : CorridorWidth;
+        }
+
+        for (var sourceRowIndex = 0; sourceRowIndex < SourceMazeRows.Length; sourceRowIndex++)
+        {
+            var sourceRow = SourceMazeRows[sourceRowIndex];
+            var rowHeight = rowHeights[sourceRowIndex];
+            var expandedWidth = 0;
+            for (var columnIndex = 0; columnIndex < columnWidths.Length; columnIndex++)
             {
-                expandedRows[expandedRowIndex] = new string('#', sourceRow.Length * CorridorWidth).ToCharArray();
+                expandedWidth += columnWidths[columnIndex];
             }
 
+            var expandedRows = new char[rowHeight][];
+            for (var expandedRowIndex = 0; expandedRowIndex < rowHeight; expandedRowIndex++)
+            {
+                expandedRows[expandedRowIndex] = new string('#', expandedWidth).ToCharArray();
+            }
+
+            var writeX = 0;
             for (var sourceColumnIndex = 0; sourceColumnIndex < sourceRow.Length; sourceColumnIndex++)
             {
                 var sourceCell = sourceRow[sourceColumnIndex];
-                for (var offsetY = 0; offsetY < CorridorWidth; offsetY++)
+                var columnWidth = columnWidths[sourceColumnIndex];
+
+                for (var offsetY = 0; offsetY < rowHeight; offsetY++)
                 {
-                    for (var offsetX = 0; offsetX < CorridorWidth; offsetX++)
+                    for (var offsetX = 0; offsetX < columnWidth; offsetX++)
                     {
-                        expandedRows[offsetY][sourceColumnIndex * CorridorWidth + offsetX] = GetExpandedCellValue(sourceCell, offsetX, offsetY);
+                        expandedRows[offsetY][writeX + offsetX] = GetExpandedCellValue(sourceCell, offsetX, offsetY);
                     }
                 }
+
+                writeX += columnWidth;
             }
 
-            for (var expandedRowIndex = 0; expandedRowIndex < CorridorWidth; expandedRowIndex++)
+            for (var expandedRowIndex = 0; expandedRowIndex < rowHeight; expandedRowIndex++)
             {
                 mazeRows.Add(new string(expandedRows[expandedRowIndex]));
             }
         }
+    }
+
+    private static bool IsSolidWallRow(string row)
+    {
+        for (var i = 0; i < row.Length; i++)
+        {
+            if (row[i] != '#')
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsSolidWallColumn(int columnIndex)
+    {
+        for (var rowIndex = 0; rowIndex < SourceMazeRows.Length; rowIndex++)
+        {
+            if (SourceMazeRows[rowIndex][columnIndex] != '#')
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static char GetExpandedCellValue(char sourceCell, int offsetX, int offsetY)
