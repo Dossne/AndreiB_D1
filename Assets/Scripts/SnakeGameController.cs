@@ -72,6 +72,7 @@ public class SnakeGameController : MonoBehaviour
     private int pendingGrowth;
     private int totalDots;
     private int dotsSinceLastGrowth;
+    private int score;
     private float moveTimer;
     private float ghostMoveTimer;
     private float ghostStunTimer;
@@ -261,6 +262,7 @@ public class SnakeGameController : MonoBehaviour
         if (dotViews.TryGetValue(nextHead, out var dotView) && dotView.enabled)
         {
             dotView.enabled = false;
+            score++;
             dotsSinceLastGrowth++;
             if (dotsSinceLastGrowth >= 3)
             {
@@ -498,6 +500,13 @@ public class SnakeGameController : MonoBehaviour
 
     private void SetGameState(GameState newState)
     {
+        if (newState == GameState.Lost)
+        {
+            score = 0;
+            StartRound();
+            return;
+        }
+
         gameState = newState;
         if (ghostView != null)
         {
@@ -886,7 +895,7 @@ public class SnakeGameController : MonoBehaviour
             return;
         }
 
-        scoreText.text = $"Dots: {totalDots - RemainingDots()}/{totalDots}";
+        scoreText.text = $"Score: {score}";
 
         switch (gameState)
         {
