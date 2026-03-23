@@ -1010,7 +1010,7 @@ public class SnakeGameController : MonoBehaviour
         rectTransform.anchorMin = new Vector2(0f, 1f);
         rectTransform.anchorMax = new Vector2(0f, 1f);
         rectTransform.pivot = new Vector2(0f, 1f);
-        rectTransform.anchoredPosition = new Vector2(18f, -18f);
+        rectTransform.anchoredPosition = new Vector2(13f, -18f);
         rectTransform.sizeDelta = new Vector2(42f, 42f);
 
         var image = buttonObject.AddComponent<Image>();
