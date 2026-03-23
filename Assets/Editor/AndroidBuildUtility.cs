@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -25,7 +26,7 @@ public static class AndroidBuildUtility
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
         if (report.summary.result != BuildResult.Succeeded)
         {
-            throw new BuildFailedException($"Android build failed: {report.summary.result}");
+            throw new Exception($"Android build failed: {report.summary.result}");
         }
     }
 }
