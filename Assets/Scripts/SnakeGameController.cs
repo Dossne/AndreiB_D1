@@ -68,12 +68,14 @@ public class SnakeGameController : MonoBehaviour
     private int dotsSinceLastGrowth;
     private float moveTimer;
     private float ghostMoveTimer;
+    private float ghostStunTimer;
     private Vector3 ghostTargetPosition;
     private Vector2 swipeStartPosition;
     private bool isSwipeTracking;
 
     private const float MoveInterval = 0.22f;
     private const float GhostMoveInterval = 0.3f;
+    private const float GhostStunDuration = 2f;
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
     private static readonly Vector3 SnakeSegmentScale = new(0.94f, 0.94f, 1f);
@@ -97,6 +99,12 @@ public class SnakeGameController : MonoBehaviour
         ReadInput();
 
         moveTimer += Time.deltaTime;
+        if (ghostStunTimer > 0f)
+        {
+            ghostStunTimer = Mathf.Max(0f, ghostStunTimer - Time.deltaTime);
+            UpdateGhostVisual();
+        }
+
         if (moveTimer >= MoveInterval)
         {
             moveTimer -= MoveInterval;
@@ -176,6 +184,7 @@ public class SnakeGameController : MonoBehaviour
         gameState = GameState.Playing;
         moveTimer = 0f;
         ghostMoveTimer = 0f;
+        ghostStunTimer = 0f;
         pendingGrowth = 0;
         dotsSinceLastGrowth = 0;
         snakeDirection = Vector2Int.right;
@@ -218,6 +227,7 @@ public class SnakeGameController : MonoBehaviour
         SyncSnakeVisuals();
         ghostView.position = GridToWorld(ghostPosition);
         ghostTargetPosition = ghostView.position;
+        UpdateGhostVisual();
         UpdateUi();
     }
 
@@ -280,6 +290,11 @@ public class SnakeGameController : MonoBehaviour
 
     private void StepGhost()
     {
+        if (ghostStunTimer > 0f)
+        {
+            return;
+        }
+
         ghostOptions.Clear();
         previousGhostPosition = ghostPosition;
 
@@ -327,13 +342,27 @@ public class SnakeGameController : MonoBehaviour
         }
 
         ghostDirection = bestDirection;
-        ghostPosition += ghostDirection;
-        ghostTargetPosition = GridToWorld(ghostPosition);
+        var nextGhostPosition = ghostPosition + ghostDirection;
 
-        if (ghostPosition == snakeSegments[0])
+        if (nextGhostPosition == snakeSegments[0])
         {
+            ghostPosition = nextGhostPosition;
+            ghostTargetPosition = GridToWorld(ghostPosition);
             SetGameState(GameState.Lost);
+            return;
         }
+
+        if (HitsSnakeBody(nextGhostPosition))
+        {
+            ghostStunTimer = GhostStunDuration;
+            ghostTargetPosition = GridToWorld(ghostPosition);
+            UpdateGhostVisual();
+            return;
+        }
+
+        ghostPosition = nextGhostPosition;
+        ghostTargetPosition = GridToWorld(ghostPosition);
+        UpdateGhostVisual();
     }
 
     private void SyncSnakeVisuals()
@@ -470,6 +499,32 @@ public class SnakeGameController : MonoBehaviour
         }
 
         UpdateUi();
+    }
+
+    private bool HitsSnakeBody(Vector2Int position)
+    {
+        for (var i = 1; i < snakeSegments.Count; i++)
+        {
+            if (snakeSegments[i] == position)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void UpdateGhostVisual()
+    {
+        if (ghostView == null)
+        {
+            return;
+        }
+
+        var ghostRenderer = ghostView.GetComponent<SpriteRenderer>();
+        ghostRenderer.color = ghostStunTimer > 0f
+            ? new Color(0.7f, 0.85f, 1f, 1f)
+            : Color.white;
     }
 
     private void ConfigureCamera()
