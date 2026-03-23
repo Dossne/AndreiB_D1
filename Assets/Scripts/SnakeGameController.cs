@@ -13,7 +13,7 @@ public class SnakeGameController : MonoBehaviour
         Lost
     }
 
-    private static readonly string[] MazeRows =
+    private static readonly string[] SourceMazeRows =
     {
         "###############",
         "#P....#.......#",
@@ -33,6 +33,7 @@ public class SnakeGameController : MonoBehaviour
     private readonly Dictionary<Vector2Int, SpriteRenderer> dotViews = new();
     private readonly HashSet<Vector2Int> walls = new();
     private readonly List<Vector2Int> ghostOptions = new();
+    private readonly List<string> mazeRows = new();
 
     private static Sprite cachedSquareSprite;
 
@@ -66,9 +67,11 @@ public class SnakeGameController : MonoBehaviour
     private const float MoveInterval = 0.22f;
     private const float GhostMoveInterval = 0.3f;
     private const float SwipeThreshold = 35f;
+    private const int CorridorWidth = 2;
 
     private void Start()
     {
+        BuildExpandedMaze();
         BuildWorld();
         BuildUi();
         ShowStartScreen();
@@ -105,8 +108,8 @@ public class SnakeGameController : MonoBehaviour
 
     private void BuildWorld()
     {
-        width = MazeRows[0].Length;
-        height = MazeRows.Length;
+        width = mazeRows[0].Length;
+        height = mazeRows.Count;
 
         boardRoot = new GameObject("Board").transform;
         boardRoot.SetParent(transform, false);
@@ -134,7 +137,7 @@ public class SnakeGameController : MonoBehaviour
                 var position = new Vector2Int(x, y);
                 CreateCell(position, new Color(0.08f, 0.1f, 0.13f), "Floor", boardRoot, new Vector3(0.96f, 0.96f, 1f));
 
-                switch (MazeRows[row][x])
+                switch (mazeRows[row][x])
                 {
                     case '#':
                         walls.Add(position);
@@ -442,6 +445,54 @@ public class SnakeGameController : MonoBehaviour
         }
 
         return cachedSquareSprite;
+    }
+
+    private void BuildExpandedMaze()
+    {
+        mazeRows.Clear();
+
+        foreach (var sourceRow in SourceMazeRows)
+        {
+            var expandedRows = new char[CorridorWidth][];
+            for (var expandedRowIndex = 0; expandedRowIndex < CorridorWidth; expandedRowIndex++)
+            {
+                expandedRows[expandedRowIndex] = new string('#', sourceRow.Length * CorridorWidth).ToCharArray();
+            }
+
+            for (var sourceColumnIndex = 0; sourceColumnIndex < sourceRow.Length; sourceColumnIndex++)
+            {
+                var sourceCell = sourceRow[sourceColumnIndex];
+                for (var offsetY = 0; offsetY < CorridorWidth; offsetY++)
+                {
+                    for (var offsetX = 0; offsetX < CorridorWidth; offsetX++)
+                    {
+                        expandedRows[offsetY][sourceColumnIndex * CorridorWidth + offsetX] = GetExpandedCellValue(sourceCell, offsetX, offsetY);
+                    }
+                }
+            }
+
+            for (var expandedRowIndex = 0; expandedRowIndex < CorridorWidth; expandedRowIndex++)
+            {
+                mazeRows.Add(new string(expandedRows[expandedRowIndex]));
+            }
+        }
+    }
+
+    private static char GetExpandedCellValue(char sourceCell, int offsetX, int offsetY)
+    {
+        switch (sourceCell)
+        {
+            case '#':
+                return '#';
+            case '.':
+                return '.';
+            case 'P':
+                return offsetX == 0 && offsetY == 0 ? 'P' : '.';
+            case 'G':
+                return offsetX == 0 && offsetY == 0 ? 'G' : '.';
+            default:
+                return '.';
+        }
     }
 
     private void BuildUi()
