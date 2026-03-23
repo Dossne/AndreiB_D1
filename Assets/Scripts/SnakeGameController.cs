@@ -40,6 +40,7 @@ public class SnakeGameController : MonoBehaviour
     private static Sprite cachedSnakeHeadSprite;
     private static Sprite cachedSnakeBodySprite;
     private static Sprite cachedSnakeTailSprite;
+    private static Sprite cachedGhostSprite;
 
     private Transform boardRoot;
     private Transform dotsRoot;
@@ -203,6 +204,9 @@ public class SnakeGameController : MonoBehaviour
         if (ghostView == null)
         {
             ghostView = CreateCell(ghostPosition, new Color(0.95f, 0.4f, 0.45f), "Ghost", transform, new Vector3(0.82f, 0.82f, 1f)).transform;
+            var ghostRenderer = ghostView.GetComponent<SpriteRenderer>();
+            ghostRenderer.sprite = CreateGhostSprite();
+            ghostRenderer.color = Color.white;
         }
         else
         {
@@ -630,6 +634,32 @@ public class SnakeGameController : MonoBehaviour
         }
 
         return cachedSnakeTailSprite;
+    }
+
+    private static Sprite CreateGhostSprite()
+    {
+        if (cachedGhostSprite == null)
+        {
+            cachedGhostSprite = CreateSnakeSprite(texture =>
+            {
+                var outlineColor = new Color32(104, 26, 64, 255);
+                var bodyColor = new Color32(246, 88, 138, 255);
+                var eyeWhite = new Color32(250, 250, 255, 255);
+                var eyePupil = new Color32(52, 88, 220, 255);
+
+                FillRect(texture, 2, 2, 11, 11, outlineColor);
+                FillRect(texture, 3, 3, 9, 9, bodyColor);
+                FillRect(texture, 4, 11, 2, 2, outlineColor);
+                FillRect(texture, 7, 11, 2, 2, outlineColor);
+                FillRect(texture, 10, 11, 2, 2, outlineColor);
+                FillRect(texture, 4, 4, 2, 4, eyeWhite);
+                FillRect(texture, 8, 4, 2, 4, eyeWhite);
+                FillRect(texture, 5, 5, 1, 2, eyePupil);
+                FillRect(texture, 8, 5, 1, 2, eyePupil);
+            });
+        }
+
+        return cachedGhostSprite;
     }
 
     private static Sprite CreateSnakeSprite(System.Action<Texture2D> painter)
