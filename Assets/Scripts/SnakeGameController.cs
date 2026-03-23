@@ -59,6 +59,11 @@ public class SnakeGameController : MonoBehaviour
     private Text statusText;
     private Text scoreText;
     private Button menuButton;
+    private GameObject lossPopup;
+    private Text lossTitleText;
+    private Text lossScoreText;
+    private Button retryButton;
+    private Button exitToMenuButton;
     private EventSystem eventSystem;
 
     private GameState gameState;
@@ -75,6 +80,7 @@ public class SnakeGameController : MonoBehaviour
     private int totalDots;
     private int dotsSinceLastGrowth;
     private int score;
+    private int lastAttemptScore;
     private float moveTimer;
     private float ghostMoveTimer;
     private float ghostStunTimer;
@@ -190,6 +196,7 @@ public class SnakeGameController : MonoBehaviour
         ghostStunTimer = 0f;
         pendingGrowth = 0;
         dotsSinceLastGrowth = 0;
+        score = 0;
         snakeDirection = Vector2Int.right;
         queuedDirection = Vector2Int.right;
         ghostDirection = Vector2Int.left;
@@ -496,9 +503,7 @@ public class SnakeGameController : MonoBehaviour
     {
         if (newState == GameState.Lost)
         {
-            score = 0;
-            StartRound();
-            return;
+            lastAttemptScore = score;
         }
 
         gameState = newState;
@@ -912,6 +917,7 @@ public class SnakeGameController : MonoBehaviour
         statusText = CreateText("Status", new Vector2(0.5f, 0.69f), font, 20, TextAnchor.MiddleCenter);
         menuButton = CreateMenuButton(font);
         menuButton.onClick.AddListener(OpenMainMenu);
+        BuildLossPopup(font);
     }
 
     private void UpdateUi()
@@ -922,6 +928,7 @@ public class SnakeGameController : MonoBehaviour
         }
 
         scoreText.text = $"Score: {score}";
+        lossPopup.SetActive(gameState == GameState.Lost);
 
         switch (gameState)
         {
@@ -945,11 +952,11 @@ public class SnakeGameController : MonoBehaviour
                 menuButton.gameObject.SetActive(true);
                 break;
             case GameState.Lost:
-                titleText.text = "Game Over";
-                statusText.text = "A ghost touched the snake head.";
-                titleText.gameObject.SetActive(true);
-                statusText.gameObject.SetActive(true);
-                menuButton.gameObject.SetActive(true);
+                titleText.gameObject.SetActive(false);
+                statusText.gameObject.SetActive(false);
+                menuButton.gameObject.SetActive(false);
+                lossTitleText.text = "Ты проиграл";
+                lossScoreText.text = $"Очки за попытку: {lastAttemptScore}";
                 break;
         }
     }
@@ -1043,6 +1050,75 @@ public class SnakeGameController : MonoBehaviour
     private void OpenMainMenu()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    private void BuildLossPopup(Font font)
+    {
+        lossPopup = new GameObject("LossPopup");
+        lossPopup.transform.SetParent(uiCanvas.transform, false);
+
+        var popupRect = lossPopup.AddComponent<RectTransform>();
+        popupRect.anchorMin = new Vector2(0.5f, 0.5f);
+        popupRect.anchorMax = new Vector2(0.5f, 0.5f);
+        popupRect.pivot = new Vector2(0.5f, 0.5f);
+        popupRect.sizeDelta = new Vector2(420f, 220f);
+        popupRect.anchoredPosition = Vector2.zero;
+
+        var popupImage = lossPopup.AddComponent<Image>();
+        popupImage.color = new Color(0.08f, 0.11f, 0.18f, 0.96f);
+
+        lossTitleText = CreateText("LossTitle", new Vector2(0.5f, 0.72f), font, 30, TextAnchor.MiddleCenter);
+        lossTitleText.transform.SetParent(lossPopup.transform, false);
+        lossTitleText.rectTransform.anchoredPosition = new Vector2(0f, 35f);
+
+        lossScoreText = CreateText("LossScore", new Vector2(0.5f, 0.5f), font, 18, TextAnchor.MiddleCenter);
+        lossScoreText.transform.SetParent(lossPopup.transform, false);
+        lossScoreText.rectTransform.anchoredPosition = new Vector2(0f, -5f);
+
+        retryButton = CreateActionButton(lossPopup.transform, font, "Повторить", new Vector2(-85f, -70f));
+        retryButton.onClick.AddListener(StartRound);
+
+        exitToMenuButton = CreateActionButton(lossPopup.transform, font, "Выйти в меню", new Vector2(85f, -70f));
+        exitToMenuButton.onClick.AddListener(OpenMainMenu);
+
+        lossPopup.SetActive(false);
+    }
+
+    private Button CreateActionButton(Transform parent, Font font, string label, Vector2 anchoredPosition)
+    {
+        var buttonObject = new GameObject($"{label}Button");
+        buttonObject.transform.SetParent(parent, false);
+
+        var rectTransform = buttonObject.AddComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.anchoredPosition = anchoredPosition;
+        rectTransform.sizeDelta = new Vector2(150f, 42f);
+
+        var image = buttonObject.AddComponent<Image>();
+        image.color = new Color(0.16f, 0.55f, 0.34f, 1f);
+
+        var button = buttonObject.AddComponent<Button>();
+        button.targetGraphic = image;
+
+        var labelObject = new GameObject("Label");
+        labelObject.transform.SetParent(buttonObject.transform, false);
+
+        var labelRect = labelObject.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        var labelText = labelObject.AddComponent<Text>();
+        labelText.font = font;
+        labelText.fontSize = 18;
+        labelText.alignment = TextAnchor.MiddleCenter;
+        labelText.color = Color.white;
+        labelText.text = label;
+
+        return button;
     }
 
     private static Font LoadUiFont()
