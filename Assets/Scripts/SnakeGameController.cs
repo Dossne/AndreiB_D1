@@ -111,13 +111,16 @@ public class SnakeGameController : MonoBehaviour
     private Button menuButton;
     private GameObject lossPopup;
     private GameObject pausePopup;
+    private GameObject winPopup;
     private Text lossTitleText;
     private Text lossScoreText;
     private Text pauseQuoteText;
+    private Text winMessageText;
     private Button retryButton;
     private Button continueButton;
     private Button exitToMenuButton;
     private Button pauseExitToMenuButton;
+    private Button winExitToMenuButton;
     private EventSystem eventSystem;
 
     private GameState gameState;
@@ -1122,6 +1125,7 @@ public class SnakeGameController : MonoBehaviour
         menuButton.onClick.AddListener(OpenPausePopup);
         BuildPausePopup(font);
         BuildLossPopup(font);
+        BuildWinPopup(font);
     }
 
     private void UpdateUi()
@@ -1134,6 +1138,7 @@ public class SnakeGameController : MonoBehaviour
         scoreText.text = $"Score: {score}";
         lossPopup.SetActive(gameState == GameState.Lost);
         pausePopup.SetActive(gameState == GameState.Paused);
+        winPopup.SetActive(gameState == GameState.Won);
 
         switch (gameState)
         {
@@ -1155,11 +1160,9 @@ public class SnakeGameController : MonoBehaviour
                 menuButton.gameObject.SetActive(false);
                 break;
             case GameState.Won:
-                titleText.text = "You Win";
-                statusText.text = "All dots collected.";
-                titleText.gameObject.SetActive(true);
-                statusText.gameObject.SetActive(true);
-                menuButton.gameObject.SetActive(true);
+                titleText.gameObject.SetActive(false);
+                statusText.gameObject.SetActive(false);
+                menuButton.gameObject.SetActive(false);
                 break;
             case GameState.Lost:
                 titleText.gameObject.SetActive(false);
@@ -1349,6 +1352,35 @@ public class SnakeGameController : MonoBehaviour
         exitToMenuButton.onClick.AddListener(OpenMainMenu);
 
         lossPopup.SetActive(false);
+    }
+
+    private void BuildWinPopup(Font font)
+    {
+        winPopup = new GameObject("WinPopup");
+        winPopup.transform.SetParent(uiCanvas.transform, false);
+
+        var popupRect = winPopup.AddComponent<RectTransform>();
+        popupRect.anchorMin = new Vector2(0.5f, 0.5f);
+        popupRect.anchorMax = new Vector2(0.5f, 0.5f);
+        popupRect.pivot = new Vector2(0.5f, 0.5f);
+        popupRect.sizeDelta = new Vector2(500f, 250f);
+        popupRect.anchoredPosition = Vector2.zero;
+
+        var popupImage = winPopup.AddComponent<Image>();
+        popupImage.color = new Color(0.08f, 0.11f, 0.18f, 0.96f);
+
+        winMessageText = CreateText("WinMessage", new Vector2(0.5f, 0.62f), font, 19, TextAnchor.MiddleCenter);
+        winMessageText.transform.SetParent(winPopup.transform, false);
+        winMessageText.rectTransform.sizeDelta = new Vector2(420f, 120f);
+        winMessageText.rectTransform.anchoredPosition = new Vector2(0f, 18f);
+        winMessageText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        winMessageText.verticalOverflow = VerticalWrapMode.Overflow;
+        winMessageText.text = "Ты победил? Что, серьезно победил? Ого, ну молодец! Уровней дальше нет, выходи давай.";
+
+        winExitToMenuButton = CreateActionButton(winPopup.transform, font, "Вернуться в меню", new Vector2(0f, -78f));
+        winExitToMenuButton.onClick.AddListener(OpenMainMenu);
+
+        winPopup.SetActive(false);
     }
 
     private Button CreateActionButton(Transform parent, Font font, string label, Vector2 anchoredPosition)
