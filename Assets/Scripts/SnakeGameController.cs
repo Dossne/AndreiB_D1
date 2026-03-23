@@ -871,7 +871,7 @@ public class SnakeGameController : MonoBehaviour
 
         var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-        scoreText = CreateText("Score", new Vector2(0.5f, 0.93f), font, 22, TextAnchor.MiddleCenter);
+        scoreText = CreateText("Score", new Vector2(0.5f, 0.93f), font, 11, TextAnchor.MiddleCenter);
         titleText = CreateText("Title", new Vector2(0.5f, 0.79f), font, 34, TextAnchor.MiddleCenter);
         statusText = CreateText("Status", new Vector2(0.5f, 0.69f), font, 20, TextAnchor.MiddleCenter);
         primaryButton = CreateButton(font);
