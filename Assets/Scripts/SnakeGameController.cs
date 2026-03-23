@@ -77,6 +77,7 @@ public class SnakeGameController : MonoBehaviour
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
     private static readonly Vector3 SnakeSegmentScale = new(0.94f, 0.94f, 1f);
+    private static readonly Vector3 GhostScale = new(0.96f, 0.96f, 1f);
 
     private void Start()
     {
@@ -203,10 +204,11 @@ public class SnakeGameController : MonoBehaviour
 
         if (ghostView == null)
         {
-            ghostView = CreateCell(ghostPosition, new Color(0.95f, 0.4f, 0.45f), "Ghost", transform, new Vector3(0.82f, 0.82f, 1f)).transform;
+            ghostView = CreateCell(ghostPosition, Color.white, "Ghost", transform, GhostScale).transform;
             var ghostRenderer = ghostView.GetComponent<SpriteRenderer>();
             ghostRenderer.sprite = CreateGhostSprite();
             ghostRenderer.color = Color.white;
+            ghostRenderer.sortingOrder = 5;
         }
         else
         {
@@ -643,19 +645,19 @@ public class SnakeGameController : MonoBehaviour
             cachedGhostSprite = CreateSnakeSprite(texture =>
             {
                 var outlineColor = new Color32(104, 26, 64, 255);
-                var bodyColor = new Color32(246, 88, 138, 255);
+                var bodyColor = new Color32(248, 92, 150, 255);
                 var eyeWhite = new Color32(250, 250, 255, 255);
                 var eyePupil = new Color32(52, 88, 220, 255);
 
-                FillRect(texture, 2, 2, 11, 11, outlineColor);
-                FillRect(texture, 3, 3, 9, 9, bodyColor);
-                FillRect(texture, 4, 11, 2, 2, outlineColor);
-                FillRect(texture, 7, 11, 2, 2, outlineColor);
-                FillRect(texture, 10, 11, 2, 2, outlineColor);
-                FillRect(texture, 4, 4, 2, 4, eyeWhite);
-                FillRect(texture, 8, 4, 2, 4, eyeWhite);
-                FillRect(texture, 5, 5, 1, 2, eyePupil);
-                FillRect(texture, 8, 5, 1, 2, eyePupil);
+                FillRect(texture, 1, 2, 14, 11, outlineColor);
+                FillRect(texture, 2, 3, 12, 9, bodyColor);
+                FillRect(texture, 2, 12, 3, 2, outlineColor);
+                FillRect(texture, 6, 12, 3, 2, outlineColor);
+                FillRect(texture, 10, 12, 3, 2, outlineColor);
+                FillRect(texture, 4, 5, 3, 4, eyeWhite);
+                FillRect(texture, 9, 5, 3, 4, eyeWhite);
+                FillRect(texture, 5, 6, 1, 2, eyePupil);
+                FillRect(texture, 9, 6, 1, 2, eyePupil);
             });
         }
 
