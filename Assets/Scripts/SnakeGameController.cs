@@ -892,24 +892,30 @@ public class SnakeGameController : MonoBehaviour
             case GameState.StartScreen:
                 titleText.text = "Maze Snake";
                 statusText.text = "Swipe or use keyboard to turn.\nCollect all dots and avoid the ghost.";
+                titleText.gameObject.SetActive(true);
+                statusText.gameObject.SetActive(true);
                 primaryButton.GetComponentInChildren<Text>().text = "Start";
                 primaryButton.gameObject.SetActive(true);
                 break;
             case GameState.Playing:
-                titleText.text = "Playing";
-                statusText.text = "Collect every dot.";
+                titleText.gameObject.SetActive(false);
+                statusText.gameObject.SetActive(false);
                 primaryButton.GetComponentInChildren<Text>().text = "Restart";
                 primaryButton.gameObject.SetActive(true);
                 break;
             case GameState.Won:
                 titleText.text = "You Win";
                 statusText.text = "All dots collected.";
+                titleText.gameObject.SetActive(true);
+                statusText.gameObject.SetActive(true);
                 primaryButton.GetComponentInChildren<Text>().text = "Restart";
                 primaryButton.gameObject.SetActive(true);
                 break;
             case GameState.Lost:
                 titleText.text = "Game Over";
                 statusText.text = "A ghost touched the snake head.";
+                titleText.gameObject.SetActive(true);
+                statusText.gameObject.SetActive(true);
                 primaryButton.GetComponentInChildren<Text>().text = "Restart";
                 primaryButton.gameObject.SetActive(true);
                 break;
