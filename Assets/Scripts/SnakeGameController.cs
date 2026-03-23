@@ -20,9 +20,48 @@ public class SnakeGameController : MonoBehaviour
     {
         StartScreen,
         Playing,
+        Paused,
         Won,
         Lost
     }
+
+    private static readonly string[] PauseQuotes =
+    {
+        "Если у тебя мало хп — не умирай.",
+        "Если хочешь выиграть — постарайся не проиграть.",
+        "Если темно — включи свет.",
+        "Если персонаж медленный — он не быстрый.",
+        "Если игра лагает — она лагает не просто так.",
+        "Если тебе скучно — тебе скучно.",
+        "Если хочешь пройти уровень — дойди до конца уровня.",
+        "Если враг сильнее — он сильнее тебя.",
+        "Если кнопка не нажимается — значит, она не нажимается.",
+        "Если персонаж упал — он больше не стоит.",
+        "Если не знаешь, куда идти — ты не знаешь, куда идти.",
+        "Если хочешь победить босса — убей босса.",
+        "Если играешь плохо — играешь плохо.",
+        "Если тебя убили — значит, ты проиграл этот момент.",
+        "Если устал — отдохни.",
+        "Если хочешь жить лучше — живи лучше.",
+        "Если экран чёрный — ты ничего не видишь.",
+        "Если прыгаешь — ты находишься в воздухе.",
+        "Если не нажал кнопку — она не нажмётся.",
+        "Если игра не запущена — ты в неё не играешь.",
+        "Если враг исчез — его больше нет на экране.",
+        "Если стоишь — ты не идёшь.",
+        "Если идёшь — ты уже не стоишь.",
+        "Если персонаж умер дважды — второй раз он тоже умер.",
+        "Если победил — ты не проиграл.",
+        "Если проиграл — ты не победил.",
+        "Если ничего не делаешь — ничего и не происходит.",
+        "Если открыл дверь — она теперь открыта.",
+        "Если закрыл дверь — она теперь закрыта.",
+        "Если не попал — значит, ты промахнулся.",
+        "Если попал — значит, не промахнулся.",
+        "Если загрузка идёт — она загружается.",
+        "Если игра закончилась — играть дальше нельзя (пока не начнёшь заново).",
+        "Если ты здесь — значит, ты не там."
+    };
 
     private static readonly string[] SourceMazeRows =
     {
@@ -71,10 +110,14 @@ public class SnakeGameController : MonoBehaviour
     private Text scoreText;
     private Button menuButton;
     private GameObject lossPopup;
+    private GameObject pausePopup;
     private Text lossTitleText;
     private Text lossScoreText;
+    private Text pauseQuoteText;
     private Button retryButton;
+    private Button continueButton;
     private Button exitToMenuButton;
+    private Button pauseExitToMenuButton;
     private EventSystem eventSystem;
 
     private GameState gameState;
@@ -576,9 +619,10 @@ public class SnakeGameController : MonoBehaviour
         }
 
         gameState = newState;
+        var showGhosts = newState == GameState.Playing || newState == GameState.Paused;
         for (var i = 0; i < ghosts.Count; i++)
         {
-            ghosts[i].View.gameObject.SetActive(newState == GameState.Playing);
+            ghosts[i].View.gameObject.SetActive(showGhosts);
         }
 
         UpdateUi();
@@ -1054,7 +1098,8 @@ public class SnakeGameController : MonoBehaviour
         titleText = CreateText("Title", new Vector2(0.5f, 0.79f), font, 34, TextAnchor.MiddleCenter);
         statusText = CreateText("Status", new Vector2(0.5f, 0.69f), font, 20, TextAnchor.MiddleCenter);
         menuButton = CreateMenuButton(font);
-        menuButton.onClick.AddListener(OpenMainMenu);
+        menuButton.onClick.AddListener(OpenPausePopup);
+        BuildPausePopup(font);
         BuildLossPopup(font);
     }
 
@@ -1067,6 +1112,7 @@ public class SnakeGameController : MonoBehaviour
 
         scoreText.text = $"Score: {score}";
         lossPopup.SetActive(gameState == GameState.Lost);
+        pausePopup.SetActive(gameState == GameState.Paused);
 
         switch (gameState)
         {
@@ -1081,6 +1127,11 @@ public class SnakeGameController : MonoBehaviour
                 titleText.gameObject.SetActive(false);
                 statusText.gameObject.SetActive(false);
                 menuButton.gameObject.SetActive(true);
+                break;
+            case GameState.Paused:
+                titleText.gameObject.SetActive(false);
+                statusText.gameObject.SetActive(false);
+                menuButton.gameObject.SetActive(false);
                 break;
             case GameState.Won:
                 titleText.text = "You Win";
@@ -1185,9 +1236,66 @@ public class SnakeGameController : MonoBehaviour
         return button;
     }
 
+    private void OpenPausePopup()
+    {
+        if (gameState != GameState.Playing)
+        {
+            return;
+        }
+
+        pauseQuoteText.text = PauseQuotes[Random.Range(0, PauseQuotes.Length)];
+        SetGameState(GameState.Paused);
+    }
+
+    private void ResumeGame()
+    {
+        if (gameState != GameState.Paused)
+        {
+            return;
+        }
+
+        SetGameState(GameState.Playing);
+    }
+
     private void OpenMainMenu()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    private void BuildPausePopup(Font font)
+    {
+        pausePopup = new GameObject("PausePopup");
+        pausePopup.transform.SetParent(uiCanvas.transform, false);
+
+        var popupRect = pausePopup.AddComponent<RectTransform>();
+        popupRect.anchorMin = new Vector2(0.5f, 0.5f);
+        popupRect.anchorMax = new Vector2(0.5f, 0.5f);
+        popupRect.pivot = new Vector2(0.5f, 0.5f);
+        popupRect.sizeDelta = new Vector2(460f, 250f);
+        popupRect.anchoredPosition = Vector2.zero;
+
+        var popupImage = pausePopup.AddComponent<Image>();
+        popupImage.color = new Color(0.08f, 0.11f, 0.18f, 0.96f);
+
+        var pauseTitleText = CreateText("PauseTitle", new Vector2(0.5f, 0.76f), font, 28, TextAnchor.MiddleCenter);
+        pauseTitleText.transform.SetParent(pausePopup.transform, false);
+        pauseTitleText.rectTransform.anchoredPosition = new Vector2(0f, 40f);
+        pauseTitleText.text = "Пауза";
+
+        pauseQuoteText = CreateText("PauseQuote", new Vector2(0.5f, 0.54f), font, 18, TextAnchor.MiddleCenter);
+        pauseQuoteText.transform.SetParent(pausePopup.transform, false);
+        pauseQuoteText.rectTransform.sizeDelta = new Vector2(380f, 90f);
+        pauseQuoteText.rectTransform.anchoredPosition = new Vector2(0f, -5f);
+        pauseQuoteText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        pauseQuoteText.verticalOverflow = VerticalWrapMode.Overflow;
+
+        continueButton = CreateActionButton(pausePopup.transform, font, "Продолжить", new Vector2(-85f, -78f));
+        continueButton.onClick.AddListener(ResumeGame);
+
+        pauseExitToMenuButton = CreateActionButton(pausePopup.transform, font, "Выйти в меню", new Vector2(85f, -78f));
+        pauseExitToMenuButton.onClick.AddListener(OpenMainMenu);
+
+        pausePopup.SetActive(false);
     }
 
     private void BuildLossPopup(Font font)
@@ -1297,3 +1405,4 @@ public class SnakeGameController : MonoBehaviour
         return cachedPauseSprite;
     }
 }
+
