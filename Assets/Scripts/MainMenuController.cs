@@ -40,10 +40,10 @@ public class MainMenuController : MonoBehaviour
         var font = LoadUiFont();
 
         CreatePanel(canvas.transform);
-        CreateText(canvas.transform, "Title", "Maze Snake", new Vector2(0.5f, 0.68f), font, 42, TextAnchor.MiddleCenter);
-        CreateText(canvas.transform, "Subtitle", "Collect all dots and survive the ghost maze.", new Vector2(0.5f, 0.58f), font, 18, TextAnchor.MiddleCenter);
+        CreateText(canvas.transform, "Title", "Змейка-лабиринт", new Vector2(0.5f, 0.68f), font, 42, TextAnchor.MiddleCenter);
+        CreateText(canvas.transform, "Subtitle", "Собери все точки и выживи в лабиринте с призраком.", new Vector2(0.5f, 0.58f), font, 18, TextAnchor.MiddleCenter);
 
-        var startButton = CreateButton(canvas.transform, font, "Start", new Vector2(0.5f, 0.42f));
+        var startButton = CreateButton(canvas.transform, font, "Старт", new Vector2(0.5f, 0.42f));
         startButton.onClick.AddListener(() => SceneManager.LoadScene(LevelSceneName));
     }
 
