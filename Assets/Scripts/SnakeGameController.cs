@@ -458,7 +458,7 @@ public class SnakeGameController : MonoBehaviour
         uiCanvas.gameObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         uiCanvas.gameObject.AddComponent<GraphicRaycaster>();
 
-        var font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         scoreText = CreateText("Score", new Vector2(0.5f, 0.93f), font, 22, TextAnchor.MiddleCenter);
         titleText = CreateText("Title", new Vector2(0.5f, 0.79f), font, 34, TextAnchor.MiddleCenter);
