@@ -3,10 +3,27 @@ using UnityEngine.SceneManagement;
 
 public static class GameBootstrap
 {
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void EnsureGameControllerExists()
+    private static bool isInitialized;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Initialize()
     {
-        var activeSceneName = SceneManager.GetActiveScene().name;
+        if (isInitialized)
+        {
+            return;
+        }
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        isInitialized = true;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+    {
+        EnsureGameControllerExists(scene.name);
+    }
+
+    private static void EnsureGameControllerExists(string activeSceneName)
+    {
         if (activeSceneName == "MainMenu")
         {
             if (Object.FindFirstObjectByType<MainMenuController>() == null)
