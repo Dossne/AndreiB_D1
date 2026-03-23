@@ -48,6 +48,7 @@ public class SnakeGameController : MonoBehaviour
     private static Sprite cachedSnakeBodySprite;
     private static Sprite cachedSnakeTailSprite;
     private static Sprite cachedGhostSprite;
+    private static Sprite cachedGearSprite;
 
     private Transform boardRoot;
     private Transform dotsRoot;
@@ -1028,12 +1029,12 @@ public class SnakeGameController : MonoBehaviour
         labelRect.offsetMin = Vector2.zero;
         labelRect.offsetMax = Vector2.zero;
 
-        var labelText = label.AddComponent<Text>();
-        labelText.font = font;
-        labelText.fontSize = 24;
-        labelText.alignment = TextAnchor.MiddleCenter;
-        labelText.color = Color.white;
-        labelText.text = "⚙";
+        var labelImage = label.AddComponent<Image>();
+        labelImage.sprite = CreateGearSprite();
+        labelImage.color = Color.white;
+        labelImage.preserveAspect = true;
+
+        labelRect.sizeDelta = new Vector2(22f, 22f);
 
         return button;
     }
@@ -1063,5 +1064,27 @@ public class SnakeGameController : MonoBehaviour
         }
 
         return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    }
+
+    private static Sprite CreateGearSprite()
+    {
+        if (cachedGearSprite == null)
+        {
+            cachedGearSprite = CreateSnakeSprite(texture =>
+            {
+                var gearColor = new Color32(245, 248, 252, 255);
+                var clearColor = new Color32(0, 0, 0, 0);
+
+                FillRect(texture, 6, 1, 4, 3, gearColor);
+                FillRect(texture, 6, 12, 4, 3, gearColor);
+                FillRect(texture, 1, 6, 3, 4, gearColor);
+                FillRect(texture, 12, 6, 3, 4, gearColor);
+                FillRect(texture, 4, 3, 8, 10, gearColor);
+                FillRect(texture, 3, 4, 10, 8, gearColor);
+                FillRect(texture, 6, 6, 4, 4, clearColor);
+            });
+        }
+
+        return cachedGearSprite;
     }
 }
