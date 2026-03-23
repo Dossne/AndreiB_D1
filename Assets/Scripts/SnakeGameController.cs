@@ -315,23 +315,24 @@ public class SnakeGameController : MonoBehaviour
 
     private void SyncSnakeVisuals()
     {
-        for (var i = 0; i < snakeSegments.Count; i++)
+        foreach (var view in segmentViews.Values)
         {
-            if (!segmentViews.TryGetValue(i, out var view))
-            {
-                view = CreateCell(snakeSegments[i], i == 0 ? new Color(0.43f, 0.9f, 0.5f) : new Color(0.26f, 0.72f, 0.34f), $"Segment_{i}", snakeRoot, new Vector3(0.84f, 0.84f, 1f)).transform;
-                segmentViews[i] = view;
-            }
-
-            view.position = GridToWorld(snakeSegments[i]);
-            view.GetComponent<SpriteRenderer>().color = i == 0 ? new Color(0.43f, 0.9f, 0.5f) : new Color(0.26f, 0.72f, 0.34f);
+            Destroy(view.gameObject);
         }
 
-        for (var i = snakeSegments.Count; i < segmentViews.Count; i++)
+        segmentViews.Clear();
+
+        for (var i = 0; i < snakeSegments.Count; i++)
         {
-            Destroy(segmentViews[i].gameObject);
-            segmentViews.Remove(i);
-            i--;
+            var view = CreateCell(
+                snakeSegments[i],
+                i == 0 ? new Color(0.43f, 0.9f, 0.5f) : new Color(0.26f, 0.72f, 0.34f),
+                $"Segment_{i}",
+                snakeRoot,
+                new Vector3(0.84f, 0.84f, 1f)).transform;
+
+            segmentViews[i] = view;
+            view.position = GridToWorld(snakeSegments[i]);
         }
     }
 
