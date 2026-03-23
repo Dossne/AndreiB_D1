@@ -6,6 +6,16 @@ using UnityEngine.UI;
 
 public class SnakeGameController : MonoBehaviour
 {
+    private class GhostAgent
+    {
+        public Transform View;
+        public Vector2Int Position;
+        public Vector2Int PreviousPosition;
+        public Vector2Int Direction = Vector2Int.left;
+        public float StunTimer;
+        public Vector3 TargetPosition;
+    }
+
     private enum GameState
     {
         StartScreen,
@@ -41,6 +51,8 @@ public class SnakeGameController : MonoBehaviour
     private readonly Dictionary<Vector2Int, SpriteRenderer> dotViews = new();
     private readonly HashSet<Vector2Int> walls = new();
     private readonly List<Vector2Int> ghostOptions = new();
+    private readonly List<Vector2Int> ghostSpawnCandidates = new();
+    private readonly List<GhostAgent> ghosts = new();
     private readonly List<string> mazeRows = new();
 
     private static Sprite cachedSquareSprite;
@@ -53,7 +65,6 @@ public class SnakeGameController : MonoBehaviour
     private Transform boardRoot;
     private Transform dotsRoot;
     private Transform snakeRoot;
-    private Transform ghostView;
     private Canvas uiCanvas;
     private Text titleText;
     private Text statusText;
@@ -69,11 +80,7 @@ public class SnakeGameController : MonoBehaviour
     private GameState gameState;
     private Vector2Int snakeDirection = Vector2Int.right;
     private Vector2Int queuedDirection = Vector2Int.right;
-    private Vector2Int ghostDirection = Vector2Int.left;
     private Vector2Int playerStart;
-    private Vector2Int ghostStart;
-    private Vector2Int ghostPosition;
-    private Vector2Int previousGhostPosition;
     private int width;
     private int height;
     private int pendingGrowth;
@@ -83,8 +90,6 @@ public class SnakeGameController : MonoBehaviour
     private int lastAttemptScore;
     private float moveTimer;
     private float ghostMoveTimer;
-    private float ghostStunTimer;
-    private Vector3 ghostTargetPosition;
     private Vector2 swipeStartPosition;
     private bool isSwipeTracking;
 
@@ -93,6 +98,7 @@ public class SnakeGameController : MonoBehaviour
     private const float GhostStunDuration = 2f;
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
+    private const int GhostCount = 3;
     private static readonly Vector3 SnakeSegmentScale = new(0.94f, 0.94f, 1f);
     private static readonly Vector3 GhostScale = new(0.96f, 0.96f, 1f);
 
@@ -114,11 +120,7 @@ public class SnakeGameController : MonoBehaviour
         ReadInput();
 
         moveTimer += Time.deltaTime;
-        if (ghostStunTimer > 0f)
-        {
-            ghostStunTimer = Mathf.Max(0f, ghostStunTimer - Time.deltaTime);
-            UpdateGhostVisual();
-        }
+        UpdateGhostTimers();
 
         if (moveTimer >= MoveInterval)
         {
@@ -135,7 +137,7 @@ public class SnakeGameController : MonoBehaviour
         if (ghostMoveTimer >= GhostMoveInterval)
         {
             ghostMoveTimer -= GhostMoveInterval;
-            StepGhost();
+            StepGhosts();
         }
 
         UpdateVisualMotion();
@@ -162,6 +164,7 @@ public class SnakeGameController : MonoBehaviour
     private void BuildMaze()
     {
         walls.Clear();
+        ghostSpawnCandidates.Clear();
 
         for (var row = 0; row < height; row++)
         {
@@ -179,9 +182,11 @@ public class SnakeGameController : MonoBehaviour
                         break;
                     case 'P':
                         playerStart = position;
+                        ghostSpawnCandidates.Add(position);
                         break;
                     case 'G':
-                        ghostStart = position;
+                    case '.':
+                        ghostSpawnCandidates.Add(position);
                         break;
                 }
             }
@@ -193,15 +198,11 @@ public class SnakeGameController : MonoBehaviour
         gameState = GameState.Playing;
         moveTimer = 0f;
         ghostMoveTimer = 0f;
-        ghostStunTimer = 0f;
         pendingGrowth = 0;
         dotsSinceLastGrowth = 0;
         score = 0;
         snakeDirection = Vector2Int.right;
         queuedDirection = Vector2Int.right;
-        ghostDirection = Vector2Int.left;
-        ghostPosition = ghostStart;
-        previousGhostPosition = ghostStart;
 
         snakeSegments.Clear();
         snakeSegments.Add(playerStart);
@@ -218,23 +219,18 @@ public class SnakeGameController : MonoBehaviour
 
         ResetDots();
 
-        if (ghostView == null)
+        foreach (var ghost in ghosts)
         {
-            ghostView = CreateCell(ghostPosition, Color.white, "Ghost", transform, GhostScale).transform;
-            var ghostRenderer = ghostView.GetComponent<SpriteRenderer>();
-            ghostRenderer.sprite = CreateGhostSprite();
-            ghostRenderer.color = Color.white;
-            ghostRenderer.sortingOrder = 5;
-        }
-        else
-        {
-            ghostView.gameObject.SetActive(true);
+            if (ghost.View != null)
+            {
+                Destroy(ghost.View.gameObject);
+            }
         }
 
+        ghosts.Clear();
+        SpawnGhosts();
+
         SyncSnakeVisuals();
-        ghostView.position = GridToWorld(ghostPosition);
-        ghostTargetPosition = ghostView.position;
-        UpdateGhostVisual();
         UpdateUi();
     }
 
@@ -290,87 +286,95 @@ public class SnakeGameController : MonoBehaviour
 
         SyncSnakeVisuals();
 
-        if (nextHead == ghostPosition)
+        for (var i = 0; i < ghosts.Count; i++)
         {
-            SetGameState(GameState.Lost);
+            if (nextHead == ghosts[i].Position)
+            {
+                SetGameState(GameState.Lost);
+                return;
+            }
         }
     }
 
-    private void StepGhost()
+    private void StepGhosts()
     {
-        if (ghostStunTimer > 0f)
+        for (var ghostIndex = 0; ghostIndex < ghosts.Count; ghostIndex++)
         {
-            return;
-        }
-
-        ghostOptions.Clear();
-        previousGhostPosition = ghostPosition;
-
-        var directions = new[]
-        {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left,
-            Vector2Int.right
-        };
-
-        foreach (var direction in directions)
-        {
-            var nextPosition = ghostPosition + direction;
-            if (walls.Contains(nextPosition))
+            var ghost = ghosts[ghostIndex];
+            if (ghost.StunTimer > 0f)
             {
                 continue;
             }
 
-            ghostOptions.Add(direction);
-        }
+            ghostOptions.Clear();
+            ghost.PreviousPosition = ghost.Position;
 
-        if (ghostOptions.Count == 0)
-        {
-            return;
-        }
+            var directions = new[]
+            {
+                Vector2Int.up,
+                Vector2Int.down,
+                Vector2Int.left,
+                Vector2Int.right
+            };
 
-        var bestDirection = ghostOptions[0];
-        var bestDistance = int.MaxValue;
+            foreach (var direction in directions)
+            {
+                var nextPosition = ghost.Position + direction;
+                if (walls.Contains(nextPosition))
+                {
+                    continue;
+                }
 
-        foreach (var option in ghostOptions)
-        {
-            if (ghostOptions.Count > 1 && option == -ghostDirection)
+                ghostOptions.Add(direction);
+            }
+
+            if (ghostOptions.Count == 0)
             {
                 continue;
             }
 
-            var predictedHead = snakeSegments[0] + snakeDirection;
-            var distance = Mathf.Abs((ghostPosition + option).x - predictedHead.x) + Mathf.Abs((ghostPosition + option).y - predictedHead.y);
-            if (distance < bestDistance)
+            var bestDirection = ghostOptions[0];
+            var bestDistance = int.MaxValue;
+
+            foreach (var option in ghostOptions)
             {
-                bestDistance = distance;
-                bestDirection = option;
+                if (ghostOptions.Count > 1 && option == -ghost.Direction)
+                {
+                    continue;
+                }
+
+                var predictedHead = snakeSegments[0] + snakeDirection;
+                var distance = Mathf.Abs((ghost.Position + option).x - predictedHead.x) + Mathf.Abs((ghost.Position + option).y - predictedHead.y);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestDirection = option;
+                }
             }
+
+            ghost.Direction = bestDirection;
+            var nextGhostPosition = ghost.Position + ghost.Direction;
+
+            if (nextGhostPosition == snakeSegments[0])
+            {
+                ghost.Position = nextGhostPosition;
+                ghost.TargetPosition = GridToWorld(ghost.Position);
+                SetGameState(GameState.Lost);
+                return;
+            }
+
+            if (HitsSnakeBody(nextGhostPosition))
+            {
+                ghost.StunTimer = GhostStunDuration;
+                ghost.TargetPosition = GridToWorld(ghost.Position);
+                UpdateGhostVisual(ghost);
+                continue;
+            }
+
+            ghost.Position = nextGhostPosition;
+            ghost.TargetPosition = GridToWorld(ghost.Position);
+            UpdateGhostVisual(ghost);
         }
-
-        ghostDirection = bestDirection;
-        var nextGhostPosition = ghostPosition + ghostDirection;
-
-        if (nextGhostPosition == snakeSegments[0])
-        {
-            ghostPosition = nextGhostPosition;
-            ghostTargetPosition = GridToWorld(ghostPosition);
-            SetGameState(GameState.Lost);
-            return;
-        }
-
-        if (HitsSnakeBody(nextGhostPosition))
-        {
-            ghostStunTimer = GhostStunDuration;
-            ghostTargetPosition = GridToWorld(ghostPosition);
-            UpdateGhostVisual();
-            return;
-        }
-
-        ghostPosition = nextGhostPosition;
-        ghostTargetPosition = GridToWorld(ghostPosition);
-        UpdateGhostVisual();
     }
 
     private void SyncSnakeVisuals()
@@ -404,12 +408,12 @@ public class SnakeGameController : MonoBehaviour
                 snakeLerp);
         }
 
-        if (ghostView != null)
+        for (var i = 0; i < ghosts.Count; i++)
         {
             var ghostLerp = Mathf.Clamp01(ghostMoveTimer / GhostMoveInterval);
-            ghostView.position = Vector3.Lerp(
-                GridToWorld(previousGhostPosition),
-                ghostTargetPosition,
+            ghosts[i].View.position = Vector3.Lerp(
+                GridToWorld(ghosts[i].PreviousPosition),
+                ghosts[i].TargetPosition,
                 ghostLerp);
         }
     }
@@ -507,9 +511,9 @@ public class SnakeGameController : MonoBehaviour
         }
 
         gameState = newState;
-        if (ghostView != null)
+        for (var i = 0; i < ghosts.Count; i++)
         {
-            ghostView.gameObject.SetActive(newState == GameState.Playing);
+            ghosts[i].View.gameObject.SetActive(newState == GameState.Playing);
         }
 
         UpdateUi();
@@ -528,17 +532,61 @@ public class SnakeGameController : MonoBehaviour
         return false;
     }
 
-    private void UpdateGhostVisual()
+    private void UpdateGhostVisual(GhostAgent ghost)
     {
-        if (ghostView == null)
+        if (ghost.View == null)
         {
             return;
         }
 
-        var ghostRenderer = ghostView.GetComponent<SpriteRenderer>();
-        ghostRenderer.color = ghostStunTimer > 0f
+        var ghostRenderer = ghost.View.GetComponent<SpriteRenderer>();
+        ghostRenderer.color = ghost.StunTimer > 0f
             ? new Color(0.7f, 0.85f, 1f, 1f)
             : Color.white;
+    }
+
+    private void UpdateGhostTimers()
+    {
+        for (var i = 0; i < ghosts.Count; i++)
+        {
+            if (ghosts[i].StunTimer <= 0f)
+            {
+                continue;
+            }
+
+            ghosts[i].StunTimer = Mathf.Max(0f, ghosts[i].StunTimer - Time.deltaTime);
+            UpdateGhostVisual(ghosts[i]);
+        }
+    }
+
+    private void SpawnGhosts()
+    {
+        var availablePositions = new List<Vector2Int>(ghostSpawnCandidates);
+        availablePositions.Remove(playerStart);
+        availablePositions.Remove(playerStart + Vector2Int.left);
+
+        for (var ghostIndex = 0; ghostIndex < GhostCount && availablePositions.Count > 0; ghostIndex++)
+        {
+            var spawnIndex = Random.Range(0, availablePositions.Count);
+            var spawnPosition = availablePositions[spawnIndex];
+            availablePositions.RemoveAt(spawnIndex);
+
+            var ghost = new GhostAgent
+            {
+                Position = spawnPosition,
+                PreviousPosition = spawnPosition,
+                TargetPosition = GridToWorld(spawnPosition)
+            };
+
+            ghost.View = CreateCell(spawnPosition, Color.white, $"Ghost_{ghostIndex}", transform, GhostScale).transform;
+            var ghostRenderer = ghost.View.GetComponent<SpriteRenderer>();
+            ghostRenderer.sprite = CreateGhostSprite();
+            ghostRenderer.color = Color.white;
+            ghostRenderer.sortingOrder = 5;
+
+            ghosts.Add(ghost);
+            UpdateGhostVisual(ghost);
+        }
     }
 
     private void ConfigureCamera()
