@@ -93,7 +93,7 @@ public class SnakeGameController : MonoBehaviour
         BuildExpandedMaze();
         BuildWorld();
         BuildUi();
-        ShowStartScreen();
+        StartRound();
     }
 
     private void Update()
