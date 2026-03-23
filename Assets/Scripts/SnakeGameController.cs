@@ -75,6 +75,7 @@ public class SnakeGameController : MonoBehaviour
     private const float GhostMoveInterval = 0.3f;
     private const float SwipeThreshold = 35f;
     private const int CorridorWidth = 2;
+    private static readonly Vector3 SnakeSegmentScale = new(0.94f, 0.94f, 1f);
 
     private void Start()
     {
@@ -382,7 +383,7 @@ public class SnakeGameController : MonoBehaviour
                 Color.white,
                 $"Segment_{segmentViews.Count}",
                 snakeRoot,
-                new Vector3(0.84f, 0.84f, 1f)).transform;
+                SnakeSegmentScale).transform;
 
             view.position = spawnPosition;
             segmentViews.Add(view);
@@ -577,14 +578,16 @@ public class SnakeGameController : MonoBehaviour
         {
             cachedSnakeHeadSprite = CreateSnakeSprite(texture =>
             {
-                var bodyColor = new Color32(110, 215, 90, 255);
+                var outlineColor = new Color32(24, 72, 36, 255);
+                var bodyColor = new Color32(132, 232, 96, 255);
                 var eyeColor = new Color32(28, 33, 35, 255);
                 var tongueColor = new Color32(250, 95, 95, 255);
 
-                FillRect(texture, 2, 2, 12, 12, bodyColor);
-                FillRect(texture, 10, 5, 3, 2, eyeColor);
-                FillRect(texture, 10, 9, 3, 2, eyeColor);
-                FillRect(texture, 13, 7, 2, 2, tongueColor);
+                FillRect(texture, 1, 1, 13, 14, outlineColor);
+                FillRect(texture, 2, 2, 11, 12, bodyColor);
+                FillRect(texture, 10, 4, 2, 2, eyeColor);
+                FillRect(texture, 10, 10, 2, 2, eyeColor);
+                FillRect(texture, 12, 7, 3, 2, tongueColor);
             });
         }
 
@@ -597,11 +600,13 @@ public class SnakeGameController : MonoBehaviour
         {
             cachedSnakeBodySprite = CreateSnakeSprite(texture =>
             {
-                var bodyColor = new Color32(78, 176, 70, 255);
-                var stripeColor = new Color32(128, 224, 112, 255);
+                var outlineColor = new Color32(22, 66, 34, 255);
+                var bodyColor = new Color32(92, 198, 76, 255);
+                var stripeColor = new Color32(150, 236, 120, 255);
 
+                FillRect(texture, 1, 1, 14, 14, outlineColor);
                 FillRect(texture, 2, 2, 12, 12, bodyColor);
-                FillRect(texture, 5, 4, 6, 8, stripeColor);
+                FillRect(texture, 4, 3, 8, 10, stripeColor);
             });
         }
 
@@ -614,11 +619,13 @@ public class SnakeGameController : MonoBehaviour
         {
             cachedSnakeTailSprite = CreateSnakeSprite(texture =>
             {
-                var bodyColor = new Color32(62, 152, 56, 255);
+                var outlineColor = new Color32(20, 60, 30, 255);
+                var bodyColor = new Color32(88, 188, 72, 255);
 
-                FillRect(texture, 2, 4, 8, 8, bodyColor);
-                FillRect(texture, 9, 5, 3, 6, bodyColor);
-                FillRect(texture, 12, 6, 2, 4, bodyColor);
+                FillRect(texture, 1, 3, 11, 10, outlineColor);
+                FillRect(texture, 2, 4, 9, 8, bodyColor);
+                FillRect(texture, 10, 5, 3, 6, bodyColor);
+                FillRect(texture, 13, 6, 2, 4, outlineColor);
             });
         }
 
