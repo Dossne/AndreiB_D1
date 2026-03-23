@@ -246,12 +246,9 @@ public class SnakeGameController : MonoBehaviour
         pendingGrowth = 0;
         dotsSinceLastGrowth = 0;
         score = 0;
-        snakeDirection = Vector2Int.right;
-        queuedDirection = Vector2Int.right;
 
         snakeSegments.Clear();
-        snakeSegments.Add(playerStart);
-        snakeSegments.Add(playerStart + Vector2Int.left);
+        InitializeSnakeStart();
         previousSnakeSegments.Clear();
         previousSnakeSegments.AddRange(snakeSegments);
 
@@ -339,6 +336,36 @@ public class SnakeGameController : MonoBehaviour
                 return;
             }
         }
+    }
+
+    private void InitializeSnakeStart()
+    {
+        var tailDirection = Vector2Int.left;
+        var candidateDirections = new[]
+        {
+            Vector2Int.left,
+            Vector2Int.down,
+            Vector2Int.up,
+            Vector2Int.right
+        };
+
+        for (var i = 0; i < candidateDirections.Length; i++)
+        {
+            var candidateTailPosition = playerStart + candidateDirections[i];
+            if (walls.Contains(candidateTailPosition))
+            {
+                continue;
+            }
+
+            tailDirection = candidateDirections[i];
+            break;
+        }
+
+        snakeDirection = -tailDirection;
+        queuedDirection = snakeDirection;
+
+        snakeSegments.Add(playerStart);
+        snakeSegments.Add(playerStart + tailDirection);
     }
 
     private void StepGhosts()
